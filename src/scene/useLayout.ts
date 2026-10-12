@@ -1,28 +1,13 @@
 import { useMemo } from 'react';
-import { SAMPLE_LAYOUT } from '../data/sample';
+import { layoutOf, type Place } from '../data/placement';
 import { useGarden } from '../store/garden';
-import { placeNew } from './layout';
-
-type Place = { x: number; y: number; size: number };
 
 /**
- * Where each memory stands on the 1440 × 900 design canvas. Sample memories use the designed layout;
- * new ones are placed deterministically so they never jump. P10 persists this with the memory.
+ * Where each memory stands on the 1440 × 900 design canvas. Sample memories use the designed layout; planted
+ * ones use the spot the store chose when they were planted, so they never move. P10 persists those spots.
  */
 export function useLayout(): Record<string, Place> {
   const ids = useGarden((s) => Object.keys(s.garden.memories).join(','));
-  return useMemo(() => {
-    const out: Record<string, Place> = {};
-    const taken: { x: number; y: number }[] = [];
-    for (const id of ids.split(',').filter(Boolean)) {
-      if (SAMPLE_LAYOUT[id]) { out[id] = SAMPLE_LAYOUT[id]; taken.push(out[id]); }
-    }
-    let n = 0;
-    for (const id of ids.split(',').filter(Boolean)) {
-      if (out[id]) continue;
-      out[id] = placeNew(taken, ++n * 7 + id.length);
-      taken.push(out[id]);
-    }
-    return out;
-  }, [ids]);
+  const positions = useGarden((s) => s.positions);
+  return useMemo(() => layoutOf(ids.split(',').filter(Boolean), positions), [ids, positions]);
 }

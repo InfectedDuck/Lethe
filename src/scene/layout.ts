@@ -33,17 +33,3 @@ export function flowerHeight(size: number): number {
 export function headOf(base: THREE.Vector3, kind: Kind, size: number): THREE.Vector3 {
   return base.clone().add(new THREE.Vector3(0, flowerHeight(size) * HEAD_FRACTION[kind], 0));
 }
-
-/** Place a newly planted memory: golden-angle spiral around the garden centre, keeping space-6 (96px) between bases. */
-export function placeNew(existing: { x: number; y: number }[], seed: number): { x: number; y: number; size: number } {
-  const minGap = 96;
-  for (let i = 0; i < 400; i++) {
-    const a = (seed + i) * 2.39996;
-    const r = 60 + i * 9;
-    const x = WORLD.centerX + Math.cos(a) * r * 1.3;
-    const y = WORLD.centerY + Math.sin(a) * r * 0.55;
-    if (x < 80 || x > 1360 || y < 260 || y > 840) continue;
-    if (existing.every((p) => Math.hypot(p.x - x, p.y - y) >= minGap)) return { x, y, size: 140 + ((seed * 37) % 30) };
-  }
-  return { x: WORLD.centerX, y: WORLD.centerY, size: 140 };
-}
