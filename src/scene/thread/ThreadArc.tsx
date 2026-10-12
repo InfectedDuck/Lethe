@@ -24,12 +24,16 @@ export type ThreadArcProps = {
   suggested?: boolean;
   /** Stable id (the two memory ids), so each thread keeps its own rhythm. */
   seed: string;
+  /** A tend just happened at one end: a bright ripple runs to the other end. `at` is performance.now(). */
+  ripple?: { at: number; fromB: boolean };
 };
 
 export const HOVER_LIT = 1.4;
 export const HOVER_DIM = 0.35;
 /** A pulse takes this long to cross a thread, then rests until its period comes round. */
 const PULSE_TRAVEL_S = 1.8;
+/** A tending ripple crosses a thread in this long; the neighbour swells as it arrives. */
+export const RIPPLE_TRAVEL_MS = 900;
 const ARC_LIFT = 0.28;
 
 const pointsShader = {
@@ -61,7 +65,7 @@ export function threadCurve(a: THREE.Vector3, b: THREE.Vector3): THREE.Quadratic
   return new THREE.QuadraticBezierCurve3(a.clone(), mid, b.clone());
 }
 
-export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed }: ThreadArcProps) {
+export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed, ripple }: ThreadArcProps) {
   // Keyed on coordinates, so a parent passing fresh Vector3s each render doesn't rebuild the curve.
   const curve = useMemo(() => threadCurve(a, b), [a.x, a.y, a.z, b.x, b.y, b.z]);
   const linePoints = useMemo(() => curve.getPoints(48), [curve]);
@@ -76,8 +80,8 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     return { period, offset, flickerPhase, motes };
   }, [seed]);
 
-  // One small point cloud per thread: index 0 is the pulse, the rest are motes.
-  const count = 1 + rhythm.motes.length;
+  // One small point cloud per thread: index 0 is the pulse, 1 the tending ripple, the rest are motes.
+  const count = 2 + rhythm.motes.length;
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3).setUsage(THREE.DynamicDrawUsage));
@@ -128,12 +132,21 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     pos.setXYZ(0, tmp.x, tmp.y, tmp.z);
     alpha.setX(0, moving && u < 1 ? Math.sin(Math.PI * u) * (0.35 + 0.65 * s) * e * fl : 0);
     size.setX(0, 5 + 3 * s);
+    // Tending ripple: twice as bright as a pulse, from the tended flower to its neighbour. Shown even on faint
+    // threads, because it is the answer to something the person just did.
+    const ru = ripple && !reduced ? (performance.now() - ripple.at) / RIPPLE_TRAVEL_MS : -1;
+    const rippling = ru >= 0 && ru <= 1;
+    curve.getPoint(rippling ? (ripple!.fromB ? 1 - ru : ru) : 0, tmp);
+    pos.setXYZ(1, tmp.x, tmp.y, tmp.z);
+    alpha.setX(1, rippling ? Math.min(1, 2 * (0.35 + 0.65 * Math.max(s, 0.4))) * Math.sin(Math.PI * ru) : 0);
+    size.setX(1, 9);
+    if (rippling && coreMat) coreMat.opacity = Math.min(1, coreMat.opacity * (1 + 0.8 * Math.sin(Math.PI * ru)));
     rhythm.motes.forEach((m, i) => {
       const mu = (((t + m.offset) / m.dur) % 1 + 1) % 1;
       curve.getPoint(mu, tmp);
-      pos.setXYZ(i + 1, tmp.x, tmp.y, tmp.z);
-      alpha.setX(i + 1, moving ? 0.55 * Math.sin(Math.PI * mu) * s * e * fl : 0);
-      size.setX(i + 1, m.size);
+      pos.setXYZ(i + 2, tmp.x, tmp.y, tmp.z);
+      alpha.setX(i + 2, moving ? 0.55 * Math.sin(Math.PI * mu) * s * e * fl : 0);
+      size.setX(i + 2, m.size);
     });
     pos.needsUpdate = true; alpha.needsUpdate = true; size.needsUpdate = true;
     material.uniforms.uPixelRatio.value = dpr;

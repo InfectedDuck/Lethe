@@ -37,9 +37,19 @@ export type FlowerProps = {
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void;
   onPointerOut?: (e: ThreeEvent<PointerEvent>) => void;
   onClick?: (e: ThreeEvent<MouseEvent>) => void;
+  /** performance.now() when this flower was last tended or reached by a ripple: it swells with light for ~2s. */
+  swellAt?: number;
 };
 
-export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick }: FlowerProps) {
+/** Tending's swell: light rises over 0.4s, then settles back over 1.6s. Returns 0–1. */
+export function swellAmount(sinceMs: number): number {
+  const t = sinceMs / 1000;
+  if (t < 0) return 0;
+  if (t < 0.4) return Math.sin((t / 0.4) * Math.PI / 2);
+  return Math.max(0, 1 - (t - 0.4) / 1.6) ** 2;
+}
+
+export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick, swellAt }: FlowerProps) {
   const data = generateFlower(kind, seed, size);
   const geo = flowerGeometry(data);
   const uniforms = useMemo(() => makeUniforms(geo.height), [geo]);
@@ -50,6 +60,8 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
   const halo = useRef<THREE.Mesh>(null);
   const first = useRef(true);
   const droop = useRef(0);
+  /** Glow and halo eased toward the state's targets; the tend swell is added on top each frame. */
+  const lit = useRef({ glow: 0, halo: 0 });
   const reduced = useReducedMotion();
   const dpr = useThree((s) => s.viewport.dpr);
   const phase = useMemo(() => (hashSeed(seed) % 1000) / 1000 * Math.PI * 2, [seed]);
@@ -74,10 +86,14 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
     u.uSolid.value += (t.solid - u.uSolid.value) * k;
     u.uOutline.value += (t.outline - u.uOutline.value) * k;
     u.uLineOp.value += (t.lineOp - u.uLineOp.value) * k;
-    u.uGlow.value += (t.glow - u.uGlow.value) * k;
-    u.uHalo.value += (t.halo - u.uHalo.value) * k;
+    lit.current.glow += (t.glow - lit.current.glow) * k;
+    lit.current.halo += (t.halo - lit.current.halo) * k;
+    const swell = swellAt === undefined || reduced ? 0 : swellAmount(performance.now() - swellAt);
+    u.uGlow.value = lit.current.glow + swell * 0.9;
+    u.uHalo.value = lit.current.halo + swell * 0.35;
     u.uMotes.value += (t.motes - u.uMotes.value) * k;
-    u.uOpacity.value += (dim - u.uOpacity.value) * k;
+    // Dimming (focus, reveal) settles faster than a state change: ~1s.
+    u.uOpacity.value += (dim - u.uOpacity.value) * (first.current ? 1 : damp(3, dt));
 
     const time = reduced ? 0 : clock.elapsedTime;
     u.uTime.value = time;
