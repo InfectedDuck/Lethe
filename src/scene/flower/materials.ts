@@ -159,6 +159,7 @@ export function makeMaterials(u: FlowerUniforms) {
     fill: new THREE.ShaderMaterial({ ...base, ...fillShader, uniforms, side: THREE.DoubleSide }),
     lines: new THREE.ShaderMaterial({ ...base, ...lineShader, uniforms }),
     motes: new THREE.ShaderMaterial({ ...base, ...moteShader, uniforms }),
-    halo: new THREE.ShaderMaterial({ ...base, ...haloShader, uniforms }),
+    // Additive, like threads and motes: a halo adds light around the head instead of laying a veil over it.
+    halo: new THREE.ShaderMaterial({ ...base, ...haloShader, uniforms, blending: THREE.AdditiveBlending }),
   };
 }
