@@ -25,7 +25,8 @@ export function ScreenProjector() {
       if (!m || !L) return null;
       const rect = gl.domElement.getBoundingClientRect();
       const base = baseToWorld(L.x, L.y);
-      const head = flowerHead(m.kind, m.id, L.size, base);
+      // A lost memory is only its dark seed now: point at the seed, not where the head used to be.
+      const head = m.lost ? base.clone().setY(0.2) : flowerHead(m.kind, m.id, L.size, base);
       const toPx = (p: THREE.Vector3) => {
         v.copy(p).project(camera);
         return { x: rect.left + (v.x + 1) / 2 * rect.width, y: rect.top + (1 - v.y) / 2 * rect.height, z: v.z };

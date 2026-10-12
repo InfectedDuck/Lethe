@@ -20,7 +20,8 @@ const FOG_THICK = 0.14;
 /** Thin fog rises by this much as the garden is neglected (share of fading/ghost/lost memories, 0–1). */
 const NEGLECT_EXTRA = 0.1;
 /** Fog in front of a memory, by state. */
-const MEMORY_FOG: Record<MemoryState, number> = { vivid: 0, fading: 0.07, ghost: FOG_THICK, lost: FOG_THICK };
+/** Lost memories get only thin fog, so their dark seed stays legible (review: a thick bank over it hid it). */
+const MEMORY_FOG: Record<MemoryState, number> = { vivid: 0, fading: 0.07, ghost: FOG_THICK, lost: 0.05 };
 
 /**
  * Thin banks over the open garden, low to the ground. Deterministic so the garden looks the same every visit.
@@ -113,7 +114,7 @@ function Bank({ position, width, height, period, seed, target }: {
 
 /** Share of memories that are no longer vivid. Drives how thick the open-garden fog is. */
 function neglect(): number {
-  const views = Object.values(useGarden.getState().views);
+  const views = Object.values(useGarden.getState().shown);
   if (!views.length) return 0;
   return views.filter((v) => v.state !== 'vivid').length / views.length;
 }
@@ -136,7 +137,7 @@ export function FogBanks() {
         return (
           <Bank key={id} position={[base.x, h * 0.5, base.z + 0.8]} width={3.4} height={Math.max(2.2, h * 1.1)}
             period={40 + (i * 13) % 50} seed={i * 1.93 + 11}
-            target={() => MEMORY_FOG[useGarden.getState().views[id]?.state ?? 'vivid']} />
+            target={() => MEMORY_FOG[useGarden.getState().shown[id]?.state ?? 'vivid']} />
         );
       })}
     </>

@@ -34,6 +34,10 @@ export type FlowerUniforms = {
   uUnfold: { value: number };
   /** The head in flower-local units, the point petals unfold from. */
   uHead: { value: THREE.Vector2 };
+  /** Dissolve: petals and light parts drifting off the head (0 attached → 1 gone). */
+  uDetach: { value: number };
+  /** Dissolve: a one-shot scatter of the particles (0 → 1); −1 means the usual slow lost-state drift. */
+  uScatter: { value: number };
 };
 
 export function makeUniforms(height: number, head = new THREE.Vector2()): FlowerUniforms {
@@ -44,6 +48,7 @@ export function makeUniforms(height: number, head = new THREE.Vector2()): Flower
     uBend: { value: 0 }, uHeight: { value: height }, uTime: { value: 0 }, uStill: { value: 0 },
     uPixelRatio: { value: 1 },
     uGrow: { value: 1 }, uUnfold: { value: 1 }, uHead: { value: head.clone() },
+    uDetach: { value: 0 }, uScatter: { value: -1 },
   };
 }
 
@@ -57,22 +62,26 @@ vec3 bend(vec3 p) {
 
 /** Bloom growth: petals (part 0) and light parts (part 2+) open out from the head; stems and leaves (part 1) don't move. */
 const GROW = /* glsl */ `
-uniform float uUnfold;
+uniform float uUnfold, uDetach;
 uniform vec2 uHead;
 vec3 grow(vec3 p, float part) {
   if (part < 0.5 || part > 1.5) {
     p.xy = uHead + (p.xy - uHead) * mix(0.06, 1.0, uUnfold);
     p.z *= uUnfold;
+    // The dissolve: each petal drifts away from the head, a little upward, as it lets go.
+    vec2 away = p.xy - uHead;
+    p.xy += away / (length(away) + 1e-4) * uDetach * 0.45 + vec2(0.0, uDetach * 0.35);
+    p.z += uDetach * 0.15;
   }
   return p;
 }`;
 
 /** Bloom growth in the fragment: stems and leaves appear from the ground up; petals fade in as they open. */
 const REVEAL = /* glsl */ `
-uniform float uGrow, uHeight;
+uniform float uGrow, uHeight, uDetach;
 float reveal(float part, float y) {
   if (part > 0.5 && part < 1.5) return y > uGrow * uHeight * 1.02 ? 0.0 : 1.0;
-  return smoothstep(0.0, 0.35, uUnfold);
+  return smoothstep(0.0, 0.35, uUnfold) * (1.0 - uDetach);
 }`;
 
 /** How much brighter than its colour each part draws at full glow (feeds the bloom pass). */
@@ -144,7 +153,7 @@ const moteShader = {
   vertexShader: /* glsl */ `
     attribute vec2 aDrift, aTime;
     attribute float aSize;
-    uniform float uTime, uStill, uPixelRatio;
+    uniform float uTime, uStill, uPixelRatio, uScatter;
     varying float vA;
     void main() {
       // Same keyframes as the design system: 0% → 0, 12% → 0.75, 100% → 0, drifting 7–13s.
@@ -152,6 +161,12 @@ const moteShader = {
       float a = ph < 0.12 ? ph / 0.12 * 0.75 : 0.75 * (1.0 - (ph - 0.12) / 0.88);
       vA = mix(a, 0.5, uStill);
       vec3 p = position + vec3(aDrift * ph * (1.0 - uStill), 0.0);
+      if (uScatter >= 0.0) {
+        // The dissolve: every particle leaves the flower's shape at once, drifting up and out, then fades.
+        float s = uScatter;
+        p = position + vec3(aDrift * (0.25 + 1.2 * s), 0.0) + vec3(0.0, 0.25 * s, 0.0);
+        vA = 0.8 * sin(3.14159 * min(1.0, s * 1.15 + 0.05));
+      }
       vec4 mv = modelViewMatrix * vec4(p, 1.0);
       gl_Position = projectionMatrix * mv;
       gl_PointSize = aSize * 2.0 * uPixelRatio * (11.5 / -mv.z);

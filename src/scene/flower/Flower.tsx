@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { flowerColor, hashSeed, mixOklab, TOKENS, type Kind, type MemoryState } from '../../engine';
 import { BloomGrowth } from '../fx/BloomGrowth';
+import { DarkSeed } from '../fx/DarkSeed';
+import { ALIVE, dissolveBeats } from '../fx/dissolveTimeline';
 import { bloomBeats } from '../fx/bloomTimeline';
 import { damp, useReducedMotion } from '../motion';
 import { generateFlower } from './generator';
@@ -20,7 +22,7 @@ export const STATE_STYLE: Record<MemoryState, {
   vivid: { fill: 0.62, leafFill: 0.35, solid: 1, outline: 0, lineOp: 0.4, glow: 1, halo: 0.5, motes: 0, droop: 0, sway: 0.012 },
   fading: { fill: 0.34, leafFill: 0.35, solid: 0.75, outline: 0, lineOp: 0.4, glow: 0.45, halo: 0.2, motes: 0, droop: 0.03, sway: 0.012 },
   ghost: { fill: 0, leafFill: 0, solid: 0, outline: 1, lineOp: 0.4, glow: 0, halo: 0, motes: 0, droop: 0.07, sway: 0.008 },
-  lost: { fill: 0, leafFill: 0, solid: 0, outline: 1, lineOp: 0.12, glow: 0, halo: 0, motes: 1, droop: 0.05, sway: 0 },
+  lost: { fill: 0, leafFill: 0, solid: 0, outline: 1, lineOp: 0.12, glow: 0, halo: 0, motes: 1, droop: 0.07, sway: 0 },
 };
 
 export type FlowerProps = {
@@ -45,6 +47,10 @@ export type FlowerProps = {
   bornAt?: number;
   /** Hold the bloom at this many ms (the bloom sandbox's storyboard frames). Overrides bornAt. */
   bloomAge?: number;
+  /** performance.now() when this memory started to dissolve (may be in the future: the return replay staggers them). */
+  diedAt?: number;
+  /** Hold the dissolve at this many ms (the dissolve sandbox's storyboard frames). Overrides diedAt. */
+  dissolveAge?: number;
 };
 
 /** Tending's swell: light rises over 0.4s, then settles back over 1.6s. Returns 0–1. */
@@ -55,7 +61,7 @@ export function swellAmount(sinceMs: number): number {
   return Math.max(0, 1 - (t - 0.4) / 1.6) ** 2;
 }
 
-export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick, swellAt, bornAt, bloomAge }: FlowerProps) {
+export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick, swellAt, bornAt, bloomAge, diedAt, dissolveAge }: FlowerProps) {
   const data = generateFlower(kind, seed, size);
   const geo = flowerGeometry(data);
   const uniforms = useMemo(() => makeUniforms(geo.height, new THREE.Vector2(geo.head.x, geo.head.y)), [geo]);
@@ -72,18 +78,24 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
   const dpr = useThree((s) => s.viewport.dpr);
   const phase = useMemo(() => (hashSeed(seed) % 1000) / 1000 * Math.PI * 2, [seed]);
 
-  const target = useMemo(() => {
-    const color = flowerColor(kind, state, hue);
+  const styleOf = (st: MemoryState) => {
+    const color = flowerColor(kind, st, hue);
     return {
-      ...STATE_STYLE[state],
+      ...STATE_STYLE[st],
       color: new THREE.Color(color),
-      stem: new THREE.Color(state === 'lost' ? TOKENS.fog : mixOklab(color, TOKENS.fog, 0.45)),
-      light: new THREE.Color(state === 'lost' ? TOKENS.fog : TOKENS.light),
+      stem: new THREE.Color(st === 'lost' ? TOKENS.fog : mixOklab(color, TOKENS.fog, 0.45)),
+      light: new THREE.Color(st === 'lost' ? TOKENS.fog : TOKENS.light),
     };
-  }, [kind, state, hue]);
+  };
+  const target = useMemo(() => styleOf(state), [kind, state, hue]);
+  /** While a lost memory is still letting go, it keeps the ghost's look. */
+  const ghostTarget = useMemo(() => styleOf('ghost'), [kind, hue]);
+  const lost = state === 'lost';
 
   useFrame(({ camera, clock }, dt) => {
-    const u = uniforms, t = target;
+    // The dissolve (storyboard p18): petals detach, scatter to particles, a dark seed remains.
+    const dying = lost ? dissolveBeats(dissolveAge ?? (diedAt === undefined ? Infinity : performance.now() - diedAt), reduced) : ALIVE;
+    const u = uniforms, t = dying.ghostLook ? ghostTarget : target;
     const k = first.current ? 1 : damp(1.2, dt);
     first.current = false;
     u.uColor.value.lerp(t.color, k); u.uStem.value.lerp(t.stem, k); u.uLight.value.lerp(t.light, k);
@@ -102,9 +114,14 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
     u.uUnfold.value = born.unfold;
     u.uGlow.value = (lit.current.glow + swell * 0.9) * (0.25 + 0.75 * born.glow);
     u.uHalo.value = (lit.current.halo + swell * 0.35) * born.glow;
-    u.uMotes.value += (t.motes - u.uMotes.value) * k;
+    u.uDetach.value = dying.detach;
+    u.uScatter.value = dying.scatter;
+    // Particles: a one-shot scatter while dissolving, then the faint drift of the lost look.
+    if (dying.scatter >= 0) u.uMotes.value = 1;
+    else u.uMotes.value += ((lost ? dying.restMotes : t.motes) - u.uMotes.value) * (first.current ? 1 : damp(2, dt));
     // Dimming (focus, reveal) settles faster than a state change: ~1s.
-    u.uOpacity.value += (dim * born.opacity - u.uOpacity.value) * (first.current || born.opacity < 1 ? 1 : damp(3, dt));
+    const wantOpacity = dim * born.opacity * dying.presence;
+    u.uOpacity.value += (wantOpacity - u.uOpacity.value) * (first.current || born.opacity < 1 || lost ? 1 : damp(3, dt));
 
     const time = reduced ? 0 : clock.elapsedTime;
     u.uTime.value = time;
@@ -138,9 +155,10 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
       <points geometry={geo.motes} material={mats.motes} />
       {(bloomAge !== undefined || (bornAt !== undefined && performance.now() - bornAt < 2400)) &&
         <BloomGrowth bornAt={bornAt ?? 0} age={bloomAge} seed={seed} />}
-      {/* Invisible hit area: the whole drawing box, so thin flowers are easy to reach. */}
-      <mesh position={[0, geo.height / 2, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut} onClick={onClick}>
-        <planeGeometry args={[geo.width * 0.7, geo.height]} />
+      {lost && <DarkSeed diedAt={diedAt} age={dissolveAge} />}
+      {/* Invisible hit area: the whole drawing box, so thin flowers are easy to reach; for a lost memory, its seed. */}
+      <mesh position={[0, lost ? 0.25 : geo.height / 2, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut} onClick={onClick}>
+        <planeGeometry args={lost ? [0.7, 0.5] : [geo.width * 0.7, geo.height]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
     </group>

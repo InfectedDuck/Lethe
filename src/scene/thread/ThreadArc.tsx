@@ -28,6 +28,8 @@ export type ThreadArcProps = {
   ripple?: { at: number; fromB: boolean };
   /** The thread stays dark until this performance.now() time (the first thread waits for its pulse). */
   holdUntil?: number;
+  /** A thread to a dissolving memory: it flickers from `flickerFrom`, then goes out at `releaseAt` (performance.now()). */
+  departing?: { flickerFrom: number; releaseAt: number };
 };
 
 export const HOVER_LIT = 1.4;
@@ -67,7 +69,7 @@ export function threadCurve(a: THREE.Vector3, b: THREE.Vector3): THREE.Quadratic
   return new THREE.QuadraticBezierCurve3(a.clone(), mid, b.clone());
 }
 
-export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed, ripple, holdUntil }: ThreadArcProps) {
+export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed, ripple, holdUntil, departing }: ThreadArcProps) {
   // Keyed on coordinates, so a parent passing fresh Vector3s each render doesn't rebuild the curve.
   const curve = useMemo(() => threadCurve(a, b), [a.x, a.y, a.z, b.x, b.y, b.z]);
   const linePoints = useMemo(() => curve.getPoints(48), [curve]);
@@ -99,29 +101,37 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
 
   const core = useRef<Line2>(null);
   const glow = useRef<Line2>(null);
-  const now = useRef({ s: 0, e: emphasis });
+  // New threads fade in from dark; a departing one starts as bright as it was.
+  // `v` is plain visibility: the core never drops below a faint floor while a thread exists, so a thread that is
+  // waiting for its first pulse, or has gone out, needs its own fade to nothing.
+  const now = useRef({ s: departing ? strength : 0, e: emphasis, v: holdUntil !== undefined && performance.now() < holdUntil ? 0 : 1 });
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const base = useMemo(() => new THREE.Color(TOKENS.thread), []);
 
   useFrame(({ clock }, dt) => {
     const cur = now.current;
-    const held = holdUntil !== undefined && performance.now() < holdUntil;
-    cur.s += ((held ? 0 : strength) - cur.s) * damp(1.2, dt); // state changes: ~3s, like dusk
+    const pnow = performance.now();
+    const held = holdUntil !== undefined && pnow < holdUntil;
+    const out = departing !== undefined && pnow >= departing.releaseAt;
+    // State changes ease over ~3s, like dusk; the last thread of a dissolving memory goes out in ~0.8s.
+    cur.s += ((held || out ? 0 : strength) - cur.s) * damp(out ? 5 : 1.2, dt);
+    cur.v += ((held || out ? 0 : 1) - cur.v) * damp(out ? 4 : 1.2, dt);
     cur.e += (emphasis - cur.e) * damp(6, dt); // hover: ~0.4s, like the interface waking
-    const s = cur.s, e = cur.e;
+    const s = cur.s, e = cur.e, v = cur.v;
     const t = reduced ? 0 : clock.elapsedTime;
-    const fl = flicker && !reduced
+    const flickering = flicker || (departing !== undefined && pnow >= departing.flickerFrom);
+    const fl = flickering && !reduced
       ? 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(t * 3 + rhythm.flickerPhase) * Math.sin(t * 5.3 + rhythm.flickerPhase * 0.7))
       : 1;
 
     const coreMat = core.current?.material, glowMat = glow.current?.material;
     if (coreMat) {
-      coreMat.opacity = Math.min(1, (suggested ? 0.5 : 0.12 + 0.6 * s) * e * fl);
+      coreMat.opacity = Math.min(1, (suggested ? 0.5 : 0.12 + 0.6 * s) * e * fl * v);
       coreMat.linewidth = suggested ? 1 : 0.6 + 0.8 * s;
       coreMat.color.copy(base).multiplyScalar(suggested ? 1 : (0.6 + 1.2 * s) * Math.min(e, 1.2));
     }
     if (glowMat) {
-      glowMat.opacity = suggested ? 0 : Math.min(1, (0.02 + 0.05 * s) * e * fl);
+      glowMat.opacity = suggested ? 0 : Math.min(1, (0.02 + 0.05 * s) * e * fl * v);
       glowMat.linewidth = 3 + 6 * s;
     }
 
@@ -133,7 +143,7 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     const u = ((t + rhythm.offset) % rhythm.period) / PULSE_TRAVEL_S;
     curve.getPoint(Math.min(1, u), tmp);
     pos.setXYZ(0, tmp.x, tmp.y, tmp.z);
-    alpha.setX(0, moving && u < 1 ? Math.sin(Math.PI * u) * (0.35 + 0.65 * s) * e * fl : 0);
+    alpha.setX(0, moving && u < 1 ? Math.sin(Math.PI * u) * (0.35 + 0.65 * s) * e * fl * v : 0);
     size.setX(0, 5 + 3 * s);
     // Tending ripple: twice as bright as a pulse, from the tended flower to its neighbour. Shown even on faint
     // threads, because it is the answer to something the person just did.
@@ -148,7 +158,7 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
       const mu = (((t + m.offset) / m.dur) % 1 + 1) % 1;
       curve.getPoint(mu, tmp);
       pos.setXYZ(i + 2, tmp.x, tmp.y, tmp.z);
-      alpha.setX(i + 2, moving ? 0.55 * Math.sin(Math.PI * mu) * s * e * fl : 0);
+      alpha.setX(i + 2, moving ? 0.55 * Math.sin(Math.PI * mu) * s * e * fl * v : 0);
       size.setX(i + 2, m.size);
     });
     pos.needsUpdate = true; alpha.needsUpdate = true; size.needsUpdate = true;

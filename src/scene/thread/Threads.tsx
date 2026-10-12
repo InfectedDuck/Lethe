@@ -1,19 +1,28 @@
 // Every thread in the garden, between flower heads. Brightness comes from the engine (threadBrightness).
 // Hovering a flower lights its threads and dims the rest, "to show what holds the memory up". While a memory
 // is open, every thread recedes with the garden, so no light crosses its words (screen p2).
+// When a memory is lost the engine drops its threads at once; here they stay a little longer, flicker and go
+// out with the dissolve (storyboard p18).
 
-import { useMemo } from 'react';
-import { threadBrightness, threadKey } from '../../engine';
+import { useMemo, useRef } from 'react';
+import { threadBrightness, threadKey, type MemoryView } from '../../engine';
 import { useGarden } from '../../store/garden';
 import { flowerHead } from '../flower/Flower';
 import { baseToWorld } from '../layout';
 import { useLayout } from '../useLayout';
 import { BLOOM_MS } from '../fx/bloomTimeline';
+import { threadDeparture } from '../fx/dissolveTimeline';
 import { HOVER_DIM, HOVER_LIT, RIPPLE_TRAVEL_MS, ThreadArc } from './ThreadArc';
+import type * as THREE from 'three';
+
+type Drawn = {
+  key: string; ids: [string, string]; a: THREE.Vector3; b: THREE.Vector3; strength: number; flicker: boolean;
+  departing?: { flickerFrom: number; releaseAt: number; goneAt: number };
+};
 
 export function Threads() {
   const garden = useGarden((s) => s.garden);
-  const views = useGarden((s) => s.views);
+  const shown = useGarden((s) => s.shown);
   const hoveredId = useGarden((s) => s.hoveredId);
   const focusedId = useGarden((s) => s.focusedId);
   const events = useGarden((s) => s.events);
@@ -21,19 +30,36 @@ export function Threads() {
   const emphasisFor = (ids: string[]) =>
     focusedId ? HOVER_DIM : !hoveredId ? 1 : ids.includes(hoveredId) ? HOVER_LIT : HOVER_DIM;
 
-  const threads = useMemo(() => garden.threads.flatMap((t) => {
+  const live = useMemo(() => garden.threads.flatMap((t): Drawn[] => {
     const A = garden.memories[t.a], B = garden.memories[t.b];
     const LA = layout[t.a], LB = layout[t.b];
-    if (!A || !B || !LA || !LB || !views[t.a] || !views[t.b]) return [];
+    if (!A || !B || !LA || !LB || !shown[t.a] || !shown[t.b]) return [];
+    // While the slider previews the future, a memory can look lost before the engine has let it go: no thread to it.
+    if (shown[t.a].state === 'lost' || shown[t.b].state === 'lost') return [];
     return [{
       key: threadKey(t.a, t.b),
       ids: [t.a, t.b],
       a: flowerHead(A.kind, A.id, LA.size, baseToWorld(LA.x, LA.y)),
       b: flowerHead(B.kind, B.id, LB.size, baseToWorld(LB.x, LB.y)),
-      strength: threadBrightness(t, views[t.a].vitality, views[t.b].vitality),
-      flicker: views[t.a].state === 'ghost' || views[t.b].state === 'ghost',
+      strength: threadBrightness(t, shown[t.a].vitality, shown[t.b].vitality),
+      flicker: isGhost(shown[t.a]) || isGhost(shown[t.b]),
     }];
-  }), [garden, views, layout]);
+  }), [garden, shown, layout]);
+
+  // Threads that just disappeared because one end is dissolving: keep drawing them until they have gone out.
+  const previous = useRef(new Map<string, Drawn>());
+  const departing = useRef(new Map<string, Drawn>());
+  const now = performance.now();
+  const liveKeys = new Set(live.map((t) => t.key));
+  for (const [key, t] of previous.current) {
+    if (liveKeys.has(key) || departing.current.has(key)) continue;
+    const died = events.filter((e) => e.type === 'dissolve' && t.ids.includes(e.id)).at(-1);
+    if (died && now - died.at < 6000) departing.current.set(key, { ...t, departing: threadDeparture(died.at) });
+  }
+  for (const [key, t] of departing.current) {
+    if (liveKeys.has(key) || (t.departing && now > t.departing.goneAt + 1000)) departing.current.delete(key);
+  }
+  previous.current = new Map(live.map((t) => [t.key, t]));
 
   // The latest tend at either end of a thread sends a ripple along it, away from the tended flower.
   // A memory that just bloomed sends one too, once it has finished growing: its first threads are lit by a pulse
@@ -50,10 +76,16 @@ export function Threads() {
 
   return (
     <>
-      {threads.map((t) => (
+      {live.map((t) => (
         <ThreadArc key={t.key} seed={t.key} a={t.a} b={t.b} strength={t.strength} flicker={t.flicker}
           emphasis={emphasisFor(t.ids)} ripple={rippleFor(t.ids)} holdUntil={holdFor(t.ids)} />
+      ))}
+      {[...departing.current.values()].map((t) => (
+        <ThreadArc key={`${t.key}:departing`} seed={t.key} a={t.a} b={t.b} strength={t.strength} flicker={t.flicker}
+          emphasis={emphasisFor(t.ids)} departing={t.departing} />
       ))}
     </>
   );
 }
+
+const isGhost = (v: MemoryView) => v.state === 'ghost';

@@ -40,11 +40,14 @@ function Light() {
   return <LightCounter className="edge top-right light-counter" value={light} max={C.LIGHT_MAX} showLabel />;
 }
 
-/** Hidden time slider for testing and demos. Toggle with the ` key. Scrub, then "arrive" to commit the time as a return visit. */
+/**
+ * Hidden time slider for testing and demos. Toggle with the ` key. Scrubbing previews the future; "arrive" commits it
+ * as a return visit and plays the return replay; "reset demo garden" puts the ten sample memories back.
+ */
 function TimeSlider() {
   const [open, setOpen] = useState(false);
   const offset = useGarden((s) => s.clock.debugOffset);
-  const { setDebugOffset, arrive } = useGarden.getState();
+  const { setDebugOffset, arrive, resetDemo } = useGarden.getState();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === '`') setOpen((o) => !o); };
     window.addEventListener('keydown', onKey);
@@ -57,7 +60,10 @@ function TimeSlider() {
         +{offset.toFixed(1)} garden days ({(offset / C.GARDEN_DAYS_PER_REAL_DAY).toFixed(1)} real)
         <input type="range" min={0} max={42} step={0.5} value={offset} onChange={(e) => setDebugOffset(Number(e.target.value))} />
       </label>
-      <Button variant="pill" onClick={arrive}>arrive</Button>
+      <div className="time-slider-actions">
+        <Button variant="pill" onClick={arrive}>arrive</Button>
+        <Button onClick={resetDemo}>reset demo garden</Button>
+      </div>
     </div>
   );
 }
