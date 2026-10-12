@@ -51,9 +51,11 @@ export function canPlant(g: Garden, realNow: number): boolean {
   return g.plantsDay !== today || g.plantsToday < PLANTS_PER_REAL_DAY;
 }
 
+const resolveAll = (g: Garden, kind: EntityKind, tags: Tags = []) =>
+  [...new Set(tags.map((t) => resolveEntity(g, kind, t.name, t.id)))];
+
 export function plant(g: Garden, input: PlantInput, now: GardenDay, realNow: number): Memory {
-  const resolve = (kind: EntityKind, tags: Tags = []) =>
-    [...new Set(tags.map((t) => resolveEntity(g, kind, t.name, t.id)))];
+  const resolve = (kind: EntityKind, tags?: Tags) => resolveAll(g, kind, tags);
   const m: Memory = {
     id: input.id, kind: input.kind, text: input.text.trim(), hue: input.hue, photoId: input.photoId,
     happenedAt: input.happenedAt, plantedAt: now, lastTendedAt: now, stability: S_INITIAL,
@@ -71,6 +73,19 @@ export function plant(g: Garden, input: PlantInput, now: GardenDay, realNow: num
     g.firstPlantingsDone = true;
   }
   return m;
+}
+
+/**
+ * Replace a memory's people, places and feelings, then redraw threads. Planting uses quick offline tags;
+ * when a tagging provider answers later, its (better) tags replace them here. Vitality is untouched.
+ */
+export function retag(g: Garden, id: string, tags: { people?: Tags; places?: Tags; feelings?: Tags }): void {
+  const m = g.memories[id];
+  if (!m) return;
+  m.people = resolveAll(g, 'person', tags.people);
+  m.places = resolveAll(g, 'place', tags.places);
+  m.feelings = resolveAll(g, 'feeling', tags.feelings);
+  rebuildThreads(g);
 }
 
 /* ---------- tending ---------- */
