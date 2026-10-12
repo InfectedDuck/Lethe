@@ -19,8 +19,8 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ✅ done |
 | P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ✅ built (not committed; commits and tests by autocode) |
 | — | **cut line: below here is optional if behind** | | | |
-| P8 | Threshold + first plantings + "a season passes" | should | 1h | ⬜ |
-| P9 | Reveal: "what holds you" | should | 1h | ⬜ |
+| P8 | Threshold + first plantings + "a season passes" | should | 1h | ✅ built (handoff to Spark) |
+| P9 | Reveal: "what holds you" | should | 1h | ✅ built (handoff to Spark) |
 | P10 | Persistence (Dexie) + settings (export, let the garden go) | should | 1h | ⬜ |
 | P11 | Sound (Tone.js) | could | 1h | ⬜ |
 | P12 | Ship: perf, deploy, demo script, look log | must | 1.5h | ⬜ (deploy early in P2) |
@@ -126,16 +126,18 @@ gantt
 
 *Look ref:* screens p7, p8–p10, p14.
 
-- [ ] **P8.1 Threshold (20m).** A dark screen, a glowing seed, "Plant something you don't want to lose." (`title-lg`), and "Click anywhere to enter · sound on". The first click starts sound and opens either the first plantings (no garden) or the demo garden ("see a garden" link, for judges).
-- [ ] **P8.2 Prompt cards (25m).** 7 prompts (`FIRST_PROMPTS` in `src/data/sample.ts`), with a dot progress row, skip and plant. Flowers grow below the card as you go (p9, p10), and threads appear between them.
-- [ ] **P8.3 "A season passes" (15m).** After the last card: one fast-forward of +10 garden days with the return replay, so the player sees fog arrive and learns the rule.
+- [x] **P8.1 Threshold (20m).** A dark screen, a glowing seed, "Plant something you don't want to lose." (`title-lg`), and "Click anywhere to enter · sound on". The first click starts sound and opens either the first plantings (no garden) or the demo garden ("see a garden" link, for judges).
+- [x] **P8.2 Prompt cards (25m).** 7 prompts (`FIRST_PROMPTS` in `src/data/sample.ts`), with a dot progress row, skip and plant. Flowers grow below the card as you go (p9, p10), and threads appear between them.
+- [x] **P8.3 "A season passes" (15m).** After the last card: one fast-forward of +10 garden days with the return replay, so the player sees fog arrive and learns the rule.
+- *Built:* the threshold opens first unless the link has `?demo` (or `?days`, `?sandbox`), so demo and judge links should use `https://lethe-nine.vercel.app/?demo`. "click anywhere to enter" leaves out "· sound on" until P11 adds sound. The first plantings grow at fixed spots low in the frame (`FIRST_PLANTING_PLACES`), so the card never hides them. Photo prompts plant with or without a photo. Skipping all seven opens an empty garden with one glowing seed (p14). The season line is "A season passes.", then the return whisper. Look log: 20261012-2100-p8-*. Note: Spark's P7 commit already contained the P8 store code (`phase`, `beginOwn`, `plantPrompt`, `skipPrompt`, the season), because it shares `src/store/garden.ts`.
 
 ## P9 · Reveal (1h, should)
 
 *Look ref:* screens p12.
 
-- [ ] **P9.1 View (40m).** "What holds your garden" (`title`), ranked from `holders()`, each with a thin light line whose length is proportional to weight (plain, no numbers, no percentages). Selecting one runs scene-spec § The reveal.
-- [ ] **P9.2 Entry (20m).** Enter via a quiet `what holds you` word near the top-left name, or by scrolling out to the overview. `back to the garden` returns.
+- [x] **P9.1 View (40m).** "What holds your garden" (`title`), ranked from `holders()`, each with a thin light line whose length is proportional to weight (plain, no numbers, no percentages). Selecting one runs scene-spec § The reveal.
+- [x] **P9.2 Entry (20m).** Enter via a quiet `what holds you` word near the top-left name, or by scrolling out to the overview. `back to the garden` returns.
+- *Built:* `src/ui/Reveal.tsx` (list, lines of light, labels) and `RevealEntry` beside "lethe". The store has `reveal`, `openReveal` (picks the strongest holder), `selectHolder`, `closeReveal`, and `heldBy`/`useRevealHeld`. The camera rises to a reveal pose with the garden right of the list. Unheld flowers sit at 15%, their threads at 5%, the held threads at ×1.6. Esc or "back to the garden" closes it; "+ plant" hides while it is open. Counts are words ("three memories"), never digits. **Not built:** entering by scrolling out, because zooming out already rises over the garden, and switching screens on a scroll would take control away mid-gesture. Found and fixed: a label running off the right edge blanked the 3D canvas after a few seconds (Leo's flowers stand at the edge); labels now flip to the flower's left and the label layer clips. Look log: 20261012-2200-p9-*. **For Spark:** added `vitest.config.ts` (testTimeout 15s, also in tsconfig `include`). The first tagging test in a file loads compromise cold (~3.5s here), which pushed two unchanged tagging tests past the 5s default. No test file was touched.
 
 ## P10 · Persistence + settings (1h, should)
 
