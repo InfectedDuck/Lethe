@@ -6,3 +6,4 @@ export * from './time';
 export * from './garden';
 export * from './color';
 export * from './rng';
+export * from './relations';

@@ -1,4 +1,5 @@
 import { FEELING_ONLY_WEIGHT, THREAD_WEIGHT } from './constants';
+import { relationKey, relationOf } from './relations';
 import type { Entity, EntityKind, Garden, Memory, Thread } from './types';
 
 export const threadKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
@@ -82,26 +83,32 @@ const norm = (s: string) =>
   s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
     .replace(/^(my|our|the)\s+/, '').replace(/[’']s$/, '').replace(/[^\p{L}\p{N} ]/gu, '').trim();
 
+/** Matching key: people named by relation share one key, so "Mom", "mum" and "my mother" are one person. */
+const keyOf = (kind: EntityKind, name: string) => (kind === 'person' ? relationKey(norm(name)) : norm(name));
+
 export function findEntity(g: Garden, kind: EntityKind, name: string): Entity | undefined {
-  const n = norm(name);
+  const k = keyOf(kind, name);
   return Object.values(g.entities).find(
-    (e) => e.kind === kind && (norm(e.name) === n || e.aliases.includes(n)),
+    (e) => e.kind === kind && (keyOf(kind, e.name) === k || e.aliases.some((a) => keyOf(kind, a) === k)),
   );
 }
 
-/** Resolve a tagged name to an entity id, creating the entity if new. `existingId` comes from Claude when it matched a known entity. */
+/** Resolve a tagged name to an entity id, creating the entity if new. `existingId` comes from a tagging provider when it matched a known entity. */
 export function resolveEntity(g: Garden, kind: EntityKind, name: string, existingId?: string): string {
   if (existingId && g.entities[existingId]?.kind === kind) {
     const e = g.entities[existingId];
     const n = norm(name);
-    if (n && norm(e.name) !== n && !e.aliases.includes(n)) e.aliases.push(n);
+    if (n && keyOf(kind, e.name) !== keyOf(kind, name) && !e.aliases.includes(n)) e.aliases.push(n);
     return e.id;
   }
   const found = findEntity(g, kind, name);
   if (found) return found.id;
-  const id = `${kind}:${norm(name).replace(/ /g, '-') || 'unnamed'}`;
+  const k = keyOf(kind, name);
+  const id = `${kind}:${k.replace(/ /g, '-') || 'unnamed'}`;
   let unique = id;
   for (let i = 2; g.entities[unique]; i++) unique = `${id}-${i}`;
-  g.entities[unique] = { id: unique, kind, name: name.trim(), aliases: [] };
+  // People named by relation are shown the same way whoever tagged them ("my mother" → "Mom").
+  const relation = kind === 'person' ? relationOf(norm(name)) : undefined;
+  g.entities[unique] = { id: unique, kind, name: relation?.display ?? name.trim(), aliases: [] };
   return unique;
 }

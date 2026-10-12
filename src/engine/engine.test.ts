@@ -44,6 +44,22 @@ describe('threads', () => {
     plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'my mother' }] }, 0, REAL);
     expect(g.threads).toHaveLength(1);
   });
+  it('treats relation words as one person: Mom, mum, my mother', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Mom' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'my mother' }] }, 0, REAL);
+    plant(g, { id: 'c', kind: 'sentence', text: 'z', people: [{ name: 'mum' }] }, 0, REAL);
+    const people = Object.values(g.entities).filter((e) => e.kind === 'person');
+    expect(people).toHaveLength(1);
+    expect(people[0].name).toBe('Mom');
+    expect(g.threads).toHaveLength(3);
+  });
+  it('keeps a named grandmother apart from an unnamed one', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Grandma Mei' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'my grandmother' }] }, 0, REAL);
+    expect(g.threads).toHaveLength(0);
+  });
   it('connected memories fade more slowly', () => {
     const g = emptyGarden(REAL);
     plant(g, { id: 'lonely', kind: 'sentence', text: 'x' }, 0, REAL);
