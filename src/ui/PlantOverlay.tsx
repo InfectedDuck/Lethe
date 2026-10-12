@@ -63,7 +63,7 @@ function FieldStep() {
   const draft = useGarden((s) => s.draft);
   const photoUrl = useGarden((s) => (s.draft?.photoId ? s.photos[s.draft.photoId]?.url : undefined));
   const { setDraftKind, setDraftText, setDraftPhoto, dropDraftTag, tagDraft, plantDraft, closePlanting } = useGarden.getState();
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
 
   useEffect(() => input.current?.focus(), [draft?.kind]);
@@ -101,8 +101,9 @@ function FieldStep() {
         </div>
       )}
 
-      <input ref={input} className="memory-lg plant-input" value={draft.text} maxLength={280} aria-label="the memory"
-        placeholder={PLACEHOLDER[draft.kind]} onChange={(e) => setDraftText(e.target.value)}
+      {/* One memory, one line of thought (design system: "a sentence, not a journal entry"); it may wrap, as in p6. */}
+      <textarea ref={input} className="memory-lg plant-input" rows={2} value={draft.text} maxLength={280} aria-label="the memory"
+        placeholder={PLACEHOLDER[draft.kind]} onChange={(e) => setDraftText(e.target.value.replace(/\n/g, ' '))}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); plant(); } }} />
 
       {chips.length > 0 && (

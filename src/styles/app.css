@@ -42,6 +42,7 @@ html, body, #root { height: 100%; overflow: hidden; }
 .kind-seed::after { content: ''; position: absolute; inset: 11px 15px; border-radius: 50%; background: var(--lt-hue);
   box-shadow: 0 0 12px var(--lt-hue); opacity: .85; }
 .plant-input { display: block; width: 100%; box-sizing: border-box; margin: var(--space-3) 0 var(--space-2); padding: var(--space-1) 0 var(--space-2);
+  resize: none; overflow: hidden; font: inherit; font-family: var(--font-display); font-size: 32px; line-height: 40px;
   background: none; border: 0; border-bottom: 1px solid color-mix(in oklab, var(--fog) 60%, transparent); outline: none; color: var(--text-primary); }
 .plant-input::placeholder { color: var(--fog); font-style: italic; }
 .plant-input:focus-visible { outline: none; border-bottom-color: var(--text-primary); }
