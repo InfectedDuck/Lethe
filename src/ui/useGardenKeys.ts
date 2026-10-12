@@ -16,8 +16,8 @@ export function useGardenKeys() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const active = document.activeElement;
       if ((e.key === 'n' || e.key === 'N') && !typing(active)) {
-        const { planting, openPlanting } = useGarden.getState();
-        if (planting === 'closed') { e.preventDefault(); openPlanting('field'); }
+        const { planting, openPlanting, phase } = useGarden.getState();
+        if (phase === 'garden' && planting === 'closed') { e.preventDefault(); openPlanting('field'); }
         return;
       }
       if (e.key === 'Escape') {

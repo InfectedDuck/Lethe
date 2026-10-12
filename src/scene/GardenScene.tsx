@@ -8,7 +8,7 @@ import { Effects } from './Effects';
 import { Flower } from './flower/Flower';
 import { FogBanks } from './fog/FogBanks';
 import { Ground } from './ground/Ground';
-import { DraftSeed } from './plant/DraftSeed';
+import { DraftSeed, EmptyGardenSeed } from './plant/DraftSeed';
 import { ScreenProjector } from './ScreenProjector';
 import { RIPPLE_TRAVEL_MS } from './thread/ThreadArc';
 import { baseToWorld } from './layout';
@@ -37,6 +37,7 @@ export function GardenScene() {
       <Flowers />
       <Threads />
       <DraftSeed />
+      <EmptyGardenSeed />
       <FogBanks />
       <Effects />
     </Canvas>

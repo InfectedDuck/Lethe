@@ -33,20 +33,43 @@ const seedShader = {
     }`,
 };
 
-export function DraftSeed() {
-  const draft = useGarden((s) => (s.planting === 'field' ? s.draft : null));
-  const garden = useGarden((s) => s.garden);
-  const now = useGarden((s) => s.now);
-  const layout = useLayout();
+/** A glowing seed, breathing on the 7s cycle and bobbing a little: the planting seed, or the empty garden's (p14). */
+export function GlowSeed({ at, color, bob = 0.05 }: { at: THREE.Vector3; color: string; bob?: number }) {
   const reduced = useReducedMotion();
   const group = useRef<THREE.Group>(null);
-
-  const color = draft ? (draft.kind === 'photo' && draft.hue ? draft.hue : KIND_COLOR[draft.kind]) : KIND_COLOR.sentence;
   const material = useMemo(() => new THREE.ShaderMaterial({
     ...seedShader, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: { uColor: { value: new THREE.Color() }, uBreath: { value: 0 } },
   }), []);
   material.uniforms.uColor.value.set(color);
+  useFrame(({ clock }) => {
+    if (!group.current) return;
+    const t = reduced ? 0 : clock.elapsedTime;
+    group.current.position.set(at.x, at.y + Math.sin(t * 1.1) * bob, at.z);
+    material.uniforms.uBreath.value = 0.5 + 0.5 * Math.sin((t / 7) * Math.PI * 2);
+  });
+  return (
+    <group ref={group} position={at}>
+      <Billboard>
+        <mesh material={material}><planeGeometry args={[0.36, 0.36]} /></mesh>
+      </Billboard>
+    </group>
+  );
+}
+
+/** An empty garden (screen p14): one seed glowing in the middle, waiting for the first memory. */
+export function EmptyGardenSeed() {
+  const empty = useGarden((s) => s.phase === 'garden' && Object.keys(s.garden.memories).length === 0 && s.planting === 'closed');
+  const at = useMemo(() => baseToWorld(720, 560).setY(0.25), []);
+  return empty ? <GlowSeed at={at} color={KIND_COLOR.sentence} bob={0.02} /> : null;
+}
+
+export function DraftSeed() {
+  const draft = useGarden((s) => (s.planting === 'field' ? s.draft : null));
+  const garden = useGarden((s) => s.garden);
+  const now = useGarden((s) => s.now);
+  const layout = useLayout();
+  const color = draft ? (draft.kind === 'photo' && draft.hue ? draft.hue : KIND_COLOR[draft.kind]) : KIND_COLOR.sentence;
 
   const seedAt = useMemo(() => (draft ? baseToWorld(draft.place.x, draft.place.y).setY(SEED_HEIGHT) : null),
     [draft?.place.x, draft?.place.y]);
@@ -60,21 +83,10 @@ export function DraftSeed() {
       .map((id) => ({ id, head: flowerHead(garden.memories[id].kind, id, layout[id].size, baseToWorld(layout[id].x, layout[id].y)) }));
   }, [draft?.tags, draft?.kind, draft?.text, garden, layout, seedAt]);
 
-  useFrame(({ clock }) => {
-    if (!group.current || !seedAt) return;
-    const t = reduced ? 0 : clock.elapsedTime;
-    group.current.position.set(seedAt.x, seedAt.y + Math.sin(t * 1.1) * 0.05, seedAt.z);
-    material.uniforms.uBreath.value = 0.5 + 0.5 * Math.sin((t / 7) * Math.PI * 2);
-  });
-
   if (!draft || !seedAt) return null;
   return (
     <>
-      <group ref={group} position={seedAt}>
-        <Billboard>
-          <mesh material={material}><planeGeometry args={[0.36, 0.36]} /></mesh>
-        </Billboard>
-      </group>
+      <GlowSeed at={seedAt} color={color} />
       {suggestions.map((s) => (
         <ThreadArc key={threadKey('__draft__', s.id)} seed={`draft:${s.id}`} a={seedAt} b={s.head} strength={0.6} suggested />
       ))}

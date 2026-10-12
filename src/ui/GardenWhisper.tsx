@@ -15,7 +15,9 @@ export function GardenWhisper() {
   const garden = useGarden((s) => s.garden);
   const views = useGarden((s) => s.views);
   const summary = useGarden((s) => s.returnSummary);
-  const line = (summary && returnWhisper(garden, views, summary)) || idleWhisper(garden, views);
+  const override = useGarden((s) => s.whisperOverride);
+  const phase = useGarden((s) => s.phase);
+  const line = override ?? ((summary && returnWhisper(garden, views, summary)) || idleWhisper(garden, views));
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -27,6 +29,6 @@ export function GardenWhisper() {
     return () => { clearTimeout(t); clearTimeout(arm); removeEventListener('pointermove', onMove); };
   }, [line]);
 
-  if (!line) return null;
+  if (!line || phase !== 'garden') return null;
   return <Whisper className="edge bottom-center whisper" visible={visible}>{line}</Whisper>;
 }

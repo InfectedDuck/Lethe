@@ -1,5 +1,5 @@
-// App shell: the 3D garden fills the screen; edge interface floats over it.
-// Screens still to build (threshold, first plantings, return replay, reveal, settings) are tasks in docs/build-plan.md.
+// App shell: the 3D garden fills the screen; edge interface floats over it. The threshold and the first plantings
+// come first (P8). Screens still to build (reveal, settings) are tasks in docs/build-plan.md.
 
 import { useEffect, useState } from 'react';
 import { C } from './engine';
@@ -7,30 +7,37 @@ import { GardenScene } from './scene/GardenScene';
 import { useGarden } from './store/garden';
 import { preloadOfflineTagger } from './tagging/offline';
 import { Button, LightCounter } from './ui/ds';
+import { FirstPlantings } from './ui/FirstPlantings';
 import { FlowerTargets } from './ui/FlowerTargets';
 import { GardenWhisper } from './ui/GardenWhisper';
 import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
 import { TendMote } from './ui/TendMote';
+import { Threshold } from './ui/Threshold';
 import { useGardenKeys } from './ui/useGardenKeys';
 
 export function App() {
   // Fetch the offline tagger's NLP library in the background, so the first planting never waits for it.
   useEffect(preloadOfflineTagger, []);
   useGardenKeys();
+  const phase = useGarden((s) => s.phase);
+  // Before the garden opens (threshold, first plantings), only the flowers and the card are on screen (p7–p10).
+  const inGarden = phase === 'garden';
   return (
     <div className="stage">
       <GardenScene />
       <FlowerTargets />
-      <span className="interface-sm edge top-left">lethe</span>
-      <Light />
+      {inGarden && <span className="interface-sm edge top-left">lethe</span>}
+      {inGarden && <Light />}
       <HoverRecollection />
       <FocusRecollection />
-      <PlantButton />
+      {inGarden && <PlantButton />}
       <PlantOverlay />
       <GardenWhisper />
       <TendMote />
-      <TimeSlider />
+      <FirstPlantings />
+      <Threshold />
+      {inGarden && <TimeSlider />}
     </div>
   );
 }

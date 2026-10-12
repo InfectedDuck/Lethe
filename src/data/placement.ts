@@ -39,3 +39,17 @@ export function layoutOf(ids: string[], positions: Record<string, Place>): Recor
   }
   return out;
 }
+
+/**
+ * Where the first plantings grow (screens p9, p10): low in the frame, below the prompt card, left and right of centre
+ * in the order they are planted, so the card never hides them and the first threads arc across the open middle.
+ */
+export const FIRST_PLANTING_PLACES: Place[] = [
+  { x: 470, y: 860, size: 120 },
+  { x: 980, y: 865, size: 120 },
+  { x: 290, y: 905, size: 110 },
+  { x: 1150, y: 900, size: 115 },
+  { x: 640, y: 910, size: 110 },
+  { x: 830, y: 920, size: 105 },
+  { x: 1300, y: 860, size: 110 },
+];
