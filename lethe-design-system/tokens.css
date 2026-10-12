@@ -1,0 +1,45 @@
+/* Lethe — generated from tokens.json */
+:root, [data-theme="night"] {
+  --night: #0b0e14;
+  --deep-night: #121722;
+  --overlay-fill: #121722cc;
+  --overlay-border: #ffffff14;
+  --fog: #8a93a6;
+  --text-primary: #e8e6e1;
+  --thread: #fff4e0;
+  --light: #ffd9a0;
+  --sentence: #f2d58a;
+  --song: #b9a3f0;
+  --place: #7fd6c2;
+  --sentence-fading: #bdb49c;
+  --song-fading: #a19bcb;
+  --place-fading: #87b4b4;
+  --focus: var(--text-primary);
+  --glow-text: 0 0 24px rgba(255, 244, 224, 0.16);
+  --glow-light: 0 0 8px rgba(255, 217, 160, 0.75);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 48px;
+  --space-6: 96px;
+  --radius-hair: 2px;
+  --radius-overlay: 16px;
+  --radius-pill: 999px;
+  --ui-asleep: 0;
+  --ui-idle: 0.5;
+  --ghost: 0.4;
+  --fog-thin: 0.06;
+  --fog-thick: 0.14;
+  --font-display: "Cormorant Garamond", Cormorant, Garamond, Georgia, serif;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.title-lg { font-family: var(--font-display); font-size: 56px; line-height: 60px; font-weight: 300; }
+.title { font-family: var(--font-display); font-size: 40px; line-height: 46px; font-weight: 300; }
+.memory-lg { font-family: var(--font-display); font-size: 32px; line-height: 40px; font-weight: 400; }
+.memory { font-family: var(--font-display); font-size: 24px; line-height: 32px; font-weight: 400; }
+.speech { font-family: var(--font-display); font-size: 24px; line-height: 32px; font-weight: 400; font-style: italic; }
+.interface { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0.04em; }
+.interface-sm { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: 0.05em; }

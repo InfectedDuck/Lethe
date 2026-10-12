@@ -1,0 +1,13 @@
+<!-- @dsCard group="Interface" height=150 subtitle="Planting a memory: choose its kind, write it, plant." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>PlantField — preview</title></head>
+<body>
+<div id="root" style="padding:16px 24px"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(L.PlantField, { defaultKind: 'song' }));
+</script>
+</body>
+</html>

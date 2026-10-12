@@ -1,0 +1,14 @@
+<!-- @dsCard group="Interface" height=72 subtitle="Text-only, or a thin 1px outline pill. Never filled." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Button — preview</title></head>
+<body>
+<div id="root" style="display:flex;gap:16px;padding:20px 24px;align-items:center"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(L.Button, { variant: 'pill' }, 'tend'), h(L.Button, null, 'let go'), h(L.Button, null, 'return'), h(L.Button, { variant: 'pill', disabled: true }, 'plant')));
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!-- @dsCard group="Memory" height=300 subtitle="Memories 1 and 10 from Sample content: quoted speech in italic; a ghost loses words." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Recollection — preview</title></head>
+<body>
+<div id="root" style="display:flex;gap:56px;padding:24px 32px;align-items:flex-start"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(L.Recollection, { size: 'lg', text: '“You don’t have to be brave all the time.”', kind: 'sentence',
+      state: 'vivid', heldBy: ['Grandma Mei', 'Hangzhou', '2014'], actions: [h(L.Button, { key: 1, variant: 'pill' }, 'tend'), h(L.Button, { key: 2 }, 'let go')] }),
+    h(L.Recollection, { text: 'The library rooftop at university', kind: 'place', state: 'ghost', heldBy: ['university'] })));
+</script>
+</body>
+</html>
