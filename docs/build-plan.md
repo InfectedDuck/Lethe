@@ -14,7 +14,7 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | P1 | Garden engine + tests + simulation | must | — | ✅ done (16 tests, sim tuned) |
 | P2 | Scene look: fog, ground, camera, post | must | 1.5h | 🟨 done except P2.1 deploy (needs your Vercel login) |
 | P3 | **Flowers**: procedural Bloom in 3D, 4 kinds × 4 states | must | 3.5h | ✅ done (ghost petals falling → P7) |
-| P4 | Threads: arcs, pulse, motes, hover | must | 1h | ⬜ skeleton exists |
+| P4 | Threads: arcs, pulse, motes, hover | must | 1h | ✅ done |
 | P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ⬜ partly |
 | P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ⬜ partly |
 | P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ⬜ partly (engine done) |
@@ -84,9 +84,9 @@ gantt
 
 *Look ref:* screens p1/p3, design-system p13.
 
-- [ ] **P4.1 Thread shader (30m).** `src/scene/thread/ThreadArc.tsx`: core + glow lines as in scene-spec; a pulse via a custom line material (or a moving sprite along the curve), period seeded 4–7s; motes when s > 0.3.
-- [ ] **P4.2 Hover + flicker + suggested style (30m).** Brighten or dim on hover (already in the skeleton), flicker to ghost ends, and a dashed variant for suggested threads (used in P6).
-- **Gate:** hover Grandma Mei's sentence → her three threads glow and the rest dim. The faint 9–10 thread is barely there.
+- [x] **P4.1 Thread shader (30m).** `src/scene/thread/ThreadArc.tsx`: core + glow lines as in scene-spec; a pulse via a custom line material (or a moving sprite along the curve), period seeded 4–7s; motes when s > 0.3.
+- [x] **P4.2 Hover + flicker + suggested style (30m).** Brighten or dim on hover (already in the skeleton), flicker to ghost ends, and a dashed variant for suggested threads (used in P6).
+- **Gate:** hover Grandma Mei's sentence → its threads glow and the rest dim. The faint 9–10 thread is barely there. *Passed:* the sentence's two threads light; kitchen–Clair de Lune dims with the rest, since it isn't the hovered flower's thread (design system: "brighten its threads"). Sandbox: `?sandbox=threads`.
 
 ## P5 · Interaction (2h, must)
 

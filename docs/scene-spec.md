@@ -66,6 +66,7 @@ Use `flowerColor(kind, state, hue)` from `src/engine/color.ts`. It is tested to 
 | flicker | if either end is ghost: opacity × (0.75 + 0.25·noise(t·3)) |
 | hover | brighten the hovered flower's threads × 1.4 and dim the rest × 0.35 |
 | suggested (planting) | dashed (`dashed`, dashSize 0.06, gapSize 0.05), opacity 0.5, no pulse |
+| as built | `src/scene/thread/ThreadArc.tsx`: two drei Lines (glow, core) plus one additive point cloud (index 0 = pulse, the rest = motes) moved along the curve each frame. The pulse crosses in 1.8s, then rests until its seeded 4–7s period comes round. Strength eases over ~3s and hover emphasis over ~0.4s. Brightness = `threadBrightness()` in the engine. Hover or focus both light a flower's threads. |
 
 ## Fog
 
