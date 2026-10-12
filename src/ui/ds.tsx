@@ -11,7 +11,7 @@ const KIND_HUE: Record<Kind, string> = { sentence: 'var(--sentence)', song: 'var
 
 /* ---------- Button ---------- */
 export function Button({ variant, className, children, ...rest }:
-  { variant?: 'pill' } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  { variant?: 'pill' } & React.ComponentProps<'button'>) {
   return (
     <button type="button" {...rest} className={cx('lt-btn', 'interface', variant === 'pill' ? 'is-pill' : 'is-text', className)}>
       {children}
