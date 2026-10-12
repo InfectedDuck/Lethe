@@ -9,7 +9,7 @@ import {
 import { setVitality, viewAll, vitalityOf } from './forgetting';
 import { neighbours, rebuildThreads, resolveEntity, threadWeight } from './threads';
 import { realDayIndex } from './time';
-import type { EntityKind, Garden, GardenDay, Kind, Memory, MemoryState, ReturnSummary } from './types';
+import type { EntityKind, Garden, GardenDay, Kind, Memory, MemoryState, ReturnSummary, Thread } from './types';
 
 export function emptyGarden(realNow: number): Garden {
   return {
@@ -218,4 +218,15 @@ export function firstWords(text: string, n: number): string {
   let s = text.replace(/[“”"]/g, '').split(/[,;:]|\.(?=\s+[A-Z“"]|$)/)[0].split(/\s+/).slice(0, n).join(' ').trim();
   while (DANGLING.test(s)) s = s.replace(DANGLING, '');
   return s;
+}
+
+/**
+ * The threads a memory would join if planted now, without changing the garden: for the dashed suggestions while
+ * it is being written. Same entity matching and thread rules as plant().
+ */
+export function previewThreads(g: Garden, input: Omit<PlantInput, 'id'>, now: GardenDay): Thread[] {
+  const draft = structuredClone(g);
+  const id = '__draft__';
+  plant(draft, { ...input, id }, now, draft.lastSeenReal);
+  return draft.threads.filter((t) => t.a === id || t.b === id);
 }
