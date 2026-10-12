@@ -1,6 +1,6 @@
 # Architecture
 
-Lethe is a local-first web app. Everything lives in the browser; only a memory's text leaves it, briefly, to be tagged by Claude. Diagrams are Mermaid: they render on GitHub, and in VS Code with the "Markdown Preview Mermaid Support" extension.
+Lethe is a local-first web app. Everything lives in the browser, including tagging: an offline tagger finds people, places and feelings in each memory. If the server has a Groq or Anthropic key, a memory's text (and the names the garden already knows) also goes, briefly, to that provider for better tags. Diagrams are Mermaid: they render on GitHub, and in VS Code with the "Markdown Preview Mermaid Support" extension.
 
 ## 1. System overview
 
@@ -9,6 +9,7 @@ flowchart LR
   subgraph Browser
     direction TB
     UI["DOM interface<br/>src/ui · design-system CSS"]
+    Offline["Offline tagger<br/>src/tagging/offline.ts · compromise"]
     Scene["3D garden<br/>src/scene · R3F + shaders"]
     Sound["Sound<br/>src/sound · Tone.js"]
     Store["Store<br/>src/store · Zustand"]
@@ -19,13 +20,14 @@ flowchart LR
     Sound --> Store
     Store --> Engine
     Store <--> DB
+    Store --> Offline
   end
   subgraph Vercel
     Fn["/api/tag<br/>server/tag.ts"]
   end
-  Claude[["Claude API<br/>claude-opus-5-5 · structured output"]]
-  Store -- "text + known entity names" --> Fn
-  Fn --> Claude
+  Provider[["optional provider<br/>Claude claude-haiku-5-5 if ANTHROPIC_API_KEY<br/>else Groq openai/gpt-oss-20b if GROQ_API_KEY<br/>else 503"]]
+  Store -. "text + known entity names (background)" .-> Fn
+  Fn --> Provider
   Fn -- "people · places · feelings (JSON)" --> Store
 ```
 
@@ -142,26 +144,31 @@ sequenceDiagram
   actor P as Person
   participant UI as PlantField / Plant overlay
   participant S as Store
+  participant O as tagging/offline.ts
   participant T as tagging/tag.ts
   participant F as /api/tag
-  participant C as Claude
+  participant C as Claude or Groq
   participant E as Engine
   participant G as Scene
   P->>UI: picks kind, types one line
   UI->>S: (debounced) preview tags
   S->>T: tag(garden, kind, text)
-  T->>F: POST {kind, text, known entities}
-  F->>C: messages.parse (structured output)
+  T->>F: POST {kind, text, known entities} (skipped after 503, or during a 429 cooldown)
+  F->>C: strict JSON schema (structured output)
   C-->>F: {people, places, feelings}
-  F-->>T: JSON
-  Note over T: offline / 503 → localTag() matches known names
+  F-->>T: JSON + x-lethe-tagger
+  Note over T,O: 503 / 429 / error / slower than 2.5s → offline tags instead
   T-->>S: tags
   S->>E: suggestThreads(draft)
   S-->>G: dashed suggested threads
   P->>UI: removes a wrong tag (×), presses plant
   UI->>S: plantMemory()
+  S->>O: offlineTag() (in the browser, no network)
   S->>E: plant() → rebuildThreads()
   S-->>G: event "bloom" → seed falls, roots, stem, petals (1.6s)
+  S-)T: apiTag() in the background
+  T--)S: better tags, if a provider answers in time
+  S->>E: retag() → rebuildThreads()
   G-->>P: first thread lights up (chord)
 ```
 
