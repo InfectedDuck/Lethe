@@ -4,11 +4,12 @@
 
 import { create } from 'zustand';
 import {
-  canPlant, gardenNow, letGo, plant, returnTo, tend, viewAll, visit,
+  canPlant, gardenNow, letGo, plant, retag, returnTo, tend, viewAll, visit,
   type Garden, type Kind, type MemoryView, type ReturnSummary,
 } from '../engine';
 import { sampleGarden } from '../data/sample';
-import { tag } from '../tagging/tag';
+import { offlineTag } from '../tagging/offline';
+import { apiTag, type TagSource } from '../tagging/tag';
 
 type Clock = { debugOffset: number };
 
@@ -19,6 +20,8 @@ type GardenStore = {
   hoveredId: string | null;
   focusedId: string | null;
   returnSummary: ReturnSummary | null;
+  /** Which tagger tagged each memory planted this session (for checking the providers on the live site). */
+  tagSources: Record<string, TagSource>;
   /** Ids that just bloomed or were tended, for one-shot animations. */
   events: { type: 'bloom' | 'tend' | 'ripple' | 'dissolve'; id: string; at: number }[];
 
@@ -59,6 +62,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     hoveredId: null,
     focusedId: null,
     returnSummary: null,
+    tagSources: {},
     events: [],
 
     now: () => {
@@ -84,12 +88,20 @@ export const useGarden = create<GardenStore>((set, get) => {
     plantMemory: async (kind, text, extra) => {
       const { garden } = get();
       if (!canPlant(garden, realNow())) return null;
-      const tags = await tag(garden, kind, text);
+      // Plant at once with the offline tagger (in the browser, no network), so the flower never waits.
+      const tags = await offlineTag(garden, kind, text);
       const id = newId();
       mutate((g, now) => {
-        plant(g, { id, kind, text, ...extra, people: tags.people, places: tags.places, feelings: tags.feelings }, now, realNow());
+        plant(g, { id, kind, text, ...extra, ...tags }, now, realNow());
       });
+      set((s) => ({ tagSources: { ...s.tagSources, [id]: 'offline' } }));
       emit('bloom', [id]);
+      // Then ask the tagging provider in the background; if it answers in time, its tags replace the offline ones.
+      void apiTag(get().garden, kind, text).then((better) => {
+        if (!better || !get().garden.memories[id]) return;
+        mutate((g) => retag(g, id, better));
+        set((s) => ({ tagSources: { ...s.tagSources, [id]: better.source } }));
+      });
       return id;
     },
 
