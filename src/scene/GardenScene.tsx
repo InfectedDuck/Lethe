@@ -8,6 +8,7 @@ import { Effects } from './Effects';
 import { Flower } from './flower/Flower';
 import { FogBanks } from './fog/FogBanks';
 import { Ground } from './ground/Ground';
+import { DraftSeed } from './plant/DraftSeed';
 import { ScreenProjector } from './ScreenProjector';
 import { RIPPLE_TRAVEL_MS } from './thread/ThreadArc';
 import { baseToWorld } from './layout';
@@ -35,6 +36,7 @@ export function GardenScene() {
       <Ground />
       <Flowers />
       <Threads />
+      <DraftSeed />
       <FogBanks />
       <Effects />
     </Canvas>
@@ -53,6 +55,7 @@ function Flowers() {
     const e = events.filter((x) => x.id === id && (x.type === 'tend' || x.type === 'ripple')).at(-1);
     return e ? e.at + (e.type === 'ripple' ? RIPPLE_TRAVEL_MS : 0) : undefined;
   };
+  const bornAt = (id: string) => events.filter((x) => x.id === id && x.type === 'bloom').at(-1)?.at;
   return (
     <>
       {Object.values(garden.memories).map((m) => {
@@ -60,7 +63,7 @@ function Flowers() {
         if (!L) return null;
         return (
           <Flower key={m.id} kind={m.kind} seed={m.id} hue={m.hue} size={L.size} state={views[m.id].state}
-            position={baseToWorld(L.x, L.y)} swellAt={swellAt(m.id)}
+            position={baseToWorld(L.x, L.y)} swellAt={swellAt(m.id)} bornAt={bornAt(m.id)}
             // An open memory stands alone; the rest of the garden recedes, as in screen p2.
             dim={focusedId && focusedId !== m.id ? FOCUS_DIM : 1}
             onPointerOver={(e) => { e.stopPropagation(); hover(m.id); document.body.style.cursor = 'pointer'; }}

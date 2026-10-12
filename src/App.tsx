@@ -6,9 +6,10 @@ import { C } from './engine';
 import { GardenScene } from './scene/GardenScene';
 import { useGarden } from './store/garden';
 import { preloadOfflineTagger } from './tagging/offline';
-import { Button, LightCounter, PlantField } from './ui/ds';
+import { Button, LightCounter } from './ui/ds';
 import { FlowerTargets } from './ui/FlowerTargets';
 import { GardenWhisper } from './ui/GardenWhisper';
+import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
 import { TendMote } from './ui/TendMote';
 import { useGardenKeys } from './ui/useGardenKeys';
@@ -25,7 +26,8 @@ export function App() {
       <Light />
       <HoverRecollection />
       <FocusRecollection />
-      <Planting />
+      <PlantButton />
+      <PlantOverlay />
       <GardenWhisper />
       <TendMote />
       <TimeSlider />
@@ -36,15 +38,6 @@ export function App() {
 function Light() {
   const light = useGarden((s) => s.garden.light);
   return <LightCounter className="edge top-right light-counter" value={light} max={C.LIGHT_MAX} showLabel />;
-}
-
-function Planting() {
-  const plantMemory = useGarden((s) => s.plantMemory);
-  const [busy, setBusy] = useState(false);
-  return (
-    <PlantField className="edge bottom-left" disabled={busy}
-      onPlant={async ({ kind, text }) => { setBusy(true); try { await plantMemory(kind, text); } finally { setBusy(false); } }} />
-  );
 }
 
 /** Hidden time slider for testing and demos. Toggle with the ` key. Scrub, then "arrive" to commit the time as a return visit. */

@@ -29,6 +29,32 @@ html, body, #root { height: 100%; overflow: hidden; }
 .tend-mote { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: var(--radius-pill);
   background: var(--light); box-shadow: var(--glow-light), 0 0 18px rgba(255, 217, 160, 0.5); }
 
+/* Planting (screens p4–p6): one overlay, floating low in the middle of the garden. */
+.plant-overlay { position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%); width: min(580px, calc(100vw - 48px)); }
+.plant-overlay .lt-overlay-actions { justify-content: flex-end; }
+.plant-note { color: var(--fog); margin-right: auto; }
+.kind-choices { display: flex; justify-content: space-around; gap: var(--space-3); padding: var(--space-3) 0 var(--space-2); }
+.kind-choice { appearance: none; background: none; border: 0; cursor: pointer; color: var(--fog); display: grid; justify-items: center;
+  gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-overlay); transition: color .4s ease; }
+.kind-choice:hover, .kind-choice:focus-visible { color: var(--text-primary); }
+.kind-seed { width: 38px; height: 38px; border-radius: var(--radius-pill); position: relative;
+  background: radial-gradient(circle, color-mix(in oklab, var(--lt-hue) 22%, transparent), transparent 70%); }
+.kind-seed::after { content: ''; position: absolute; inset: 11px 15px; border-radius: 50%; background: var(--lt-hue);
+  box-shadow: 0 0 12px var(--lt-hue); opacity: .85; }
+.plant-input { display: block; width: 100%; box-sizing: border-box; margin: var(--space-3) 0 var(--space-2); padding: var(--space-1) 0 var(--space-2);
+  background: none; border: 0; border-bottom: 1px solid color-mix(in oklab, var(--fog) 60%, transparent); outline: none; color: var(--text-primary); }
+.plant-input::placeholder { color: var(--fog); font-style: italic; }
+.plant-input:focus-visible { outline: none; border-bottom-color: var(--text-primary); }
+.plant-threads { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.plant-threads > .interface-sm { color: var(--fog); }
+.plant-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.plant-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: 4px 6px 4px 14px; color: var(--text-primary);
+  border: 1px solid color-mix(in oklab, var(--fog) 55%, transparent); border-radius: var(--radius-pill); }
+.plant-chip-x { appearance: none; background: none; border: 0; color: var(--fog); cursor: pointer; padding: 0 6px; font: inherit; border-radius: var(--radius-pill); }
+.plant-chip-x:hover, .plant-chip-x:focus-visible { color: var(--text-primary); }
+.photo-pick { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.photo-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-hair); }
+
 @media (prefers-reduced-motion: reduce) {
   .surface { animation: none; }
   .light-counter .lt-light-dot { transition: none; }
