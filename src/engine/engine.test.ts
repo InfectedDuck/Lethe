@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sampleGarden } from '../data/sample';
 import {
-  C, advance, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag,
+  C, advance, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag, threadBrightness,
   retention, returnTo, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf,
 } from './index';
 
@@ -69,6 +69,19 @@ describe('threads', () => {
     const after = g.threads.filter((t) => t.a === 'new' || t.b === 'new');
     expect(after.find((t) => [t.a, t.b].includes('m1'))?.level).toBe(2);
     expect(g.memories.new.lastTendedAt).toBe(100);
+  });
+  it('thread brightness follows the sample strengths and fades with its ends', () => {
+    const g = sampleGarden(100, REAL);
+    const v = viewAll(g, 100);
+    const b = (a: string, c: string) => {
+      const t = g.threads.find((x) => threadKey(x.a, x.b) === threadKey(a, c))!;
+      return threadBrightness(t, v[a].vitality, v[c].vitality);
+    };
+    expect(b('m1', 'm2')).toBeCloseTo(0.95, 2);
+    expect(b('m1', 'm3')).toBeCloseTo(0.85, 2);
+    expect(b('m4', 'm6')).toBeCloseTo(0.6, 1);
+    expect(b('m7', 'm8')).toBeCloseTo(0.43, 1);
+    expect(b('m9', 'm10')).toBeLessThan(0.1);
   });
   it('connected memories fade more slowly', () => {
     const g = emptyGarden(REAL);

@@ -112,3 +112,11 @@ export function resolveEntity(g: Garden, kind: EntityKind, name: string, existin
   g.entities[unique] = { id: unique, kind, name: relation?.display ?? name.trim(), aliases: [] };
   return unique;
 }
+
+/**
+ * How bright a thread draws (0–1): its weight, dimmed as either end fades (docs/systems.md § Threads).
+ * Reproduces the sample strengths: two vivid ends 0.85–0.95, vivid–fading ~0.6, fading–fading ~0.43.
+ */
+export function threadBrightness(t: Thread, vitalityA: number, vitalityB: number): number {
+  return threadWeight(t) * Math.min(1, Math.sqrt(Math.max(0, vitalityA * vitalityB)) / 0.9);
+}
