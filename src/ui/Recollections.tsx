@@ -20,11 +20,12 @@ export function heldByNames(m: Memory): string[] {
 export function HoverRecollection() {
   const hoveredId = useGarden((s) => s.hoveredId);
   const focusedId = useGarden((s) => s.focusedId);
+  const revealing = useGarden((s) => s.reveal.open);
   const view = useGarden((s) => (hoveredId ? s.views[hoveredId] : null));
   const m = useGarden((s) => (hoveredId ? s.garden.memories[hoveredId] : null));
   const el = useRef<HTMLDivElement>(null);
 
-  useFollow(m && !focusedId ? m.id : null, (_, p) => {
+  useFollow(m && !focusedId && !revealing ? m.id : null, (_, p) => {
     const box = el.current;
     if (!box) return;
     if (!p || !p.onScreen) { box.style.visibility = 'hidden'; return; }
@@ -37,7 +38,7 @@ export function HoverRecollection() {
     box.style.visibility = 'visible';
   });
 
-  if (!m || !view || focusedId) return null;
+  if (!m || !view || focusedId || revealing) return null;
   return (
     <div ref={el} className="hover-recollection surface" style={{ visibility: 'hidden' }}>
       <Recollection text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state} heldBy={heldByNames(m)} />

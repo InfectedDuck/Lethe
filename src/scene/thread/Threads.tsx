@@ -6,13 +6,13 @@
 
 import { useMemo, useRef } from 'react';
 import { threadBrightness, threadKey, type MemoryView } from '../../engine';
-import { useGarden } from '../../store/garden';
+import { useGarden, useRevealHeld } from '../../store/garden';
 import { flowerHead } from '../flower/Flower';
 import { baseToWorld } from '../layout';
 import { useLayout } from '../useLayout';
 import { BLOOM_MS } from '../fx/bloomTimeline';
 import { threadDeparture } from '../fx/dissolveTimeline';
-import { HOVER_DIM, HOVER_LIT, RIPPLE_TRAVEL_MS, ThreadArc } from './ThreadArc';
+import { HOVER_DIM, HOVER_LIT, REVEAL_DIM, REVEAL_LIT, RIPPLE_TRAVEL_MS, ThreadArc } from './ThreadArc';
 import type * as THREE from 'three';
 
 type Drawn = {
@@ -27,8 +27,10 @@ export function Threads() {
   const focusedId = useGarden((s) => s.focusedId);
   const events = useGarden((s) => s.events);
   const layout = useLayout();
+  const held = useRevealHeld();
   const emphasisFor = (ids: string[]) =>
-    focusedId ? HOVER_DIM : !hoveredId ? 1 : ids.includes(hoveredId) ? HOVER_LIT : HOVER_DIM;
+    held ? (ids.every((id) => held.includes(id)) ? REVEAL_LIT : REVEAL_DIM)
+    : focusedId ? HOVER_DIM : !hoveredId ? 1 : ids.includes(hoveredId) ? HOVER_LIT : HOVER_DIM;
 
   const live = useMemo(() => garden.threads.flatMap((t): Drawn[] => {
     const A = garden.memories[t.a], B = garden.memories[t.b];

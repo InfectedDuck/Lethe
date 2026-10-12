@@ -1,5 +1,5 @@
 // App shell: the 3D garden fills the screen; edge interface floats over it. The threshold and the first plantings
-// come first (P8). Screens still to build (reveal, settings) are tasks in docs/build-plan.md.
+// come first (P8); "what holds you" opens the reveal (P9); settings are still a task in docs/build-plan.md (P10).
 
 import { useEffect, useState } from 'react';
 import { C } from './engine';
@@ -12,6 +12,7 @@ import { FlowerTargets } from './ui/FlowerTargets';
 import { GardenWhisper } from './ui/GardenWhisper';
 import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
+import { Reveal, RevealEntry } from './ui/Reveal';
 import { TendMote } from './ui/TendMote';
 import { Threshold } from './ui/Threshold';
 import { useGardenKeys } from './ui/useGardenKeys';
@@ -23,18 +24,25 @@ export function App() {
   const phase = useGarden((s) => s.phase);
   // Before the garden opens (threshold, first plantings), only the flowers and the card are on screen (p7–p10).
   const inGarden = phase === 'garden';
+  const revealing = useGarden((s) => s.reveal.open);
   return (
     <div className="stage">
       <GardenScene />
       <FlowerTargets />
-      {inGarden && <span className="interface-sm edge top-left">lethe</span>}
+      {inGarden && (
+        <div className="edge top-left top-left-row">
+          <span className="interface-sm">lethe</span>
+          <RevealEntry />
+        </div>
+      )}
       {inGarden && <Light />}
       <HoverRecollection />
       <FocusRecollection />
-      {inGarden && <PlantButton />}
+      {inGarden && !revealing && <PlantButton />}
       <PlantOverlay />
       <GardenWhisper />
       <TendMote />
+      {inGarden && <Reveal />}
       <FirstPlantings />
       <Threshold />
       {inGarden && <TimeSlider />}
