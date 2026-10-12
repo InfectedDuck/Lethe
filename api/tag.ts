@@ -1,10 +1,11 @@
-// Vercel serverless function: POST /api/tag. Set ANTHROPIC_API_KEY in the Vercel project settings.
+// Vercel serverless function: POST /api/tag. The provider follows which key is set in the Vercel project
+// (ANTHROPIC_API_KEY → Claude, else GROQ_API_KEY → Groq, else 503 and the browser tags offline). See server/tag.ts.
 // Explicit .js: Vercel runs this file as a native Node ES module, which needs extensions.
-import { handleTag } from '../server/tag.js';
+import { handleTag, replyHeaders } from '../server/tag.js';
 
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
-  try { body = await request.json(); } catch { return Response.json({ error: 'bad request' }, { status: 400 }); }
-  const { status, json } = await handleTag(body);
-  return Response.json(json, { status });
+  try { body = await request.json(); } catch { body = null; }
+  const reply = await handleTag(body);
+  return new Response(JSON.stringify(reply.json), { status: reply.status, headers: replyHeaders(reply) });
 }

@@ -12,18 +12,18 @@ function tagApi(): Plugin {
         for await (const chunk of req) raw += chunk;
         let body: unknown = null;
         try { body = JSON.parse(raw); } catch { /* handled as bad request */ }
-        const { handleTag } = await server.ssrLoadModule('/server/tag.ts') as typeof import('./server/tag');
-        const { status, json } = await handleTag(body);
-        res.statusCode = status;
-        res.setHeader('content-type', 'application/json');
-        res.end(JSON.stringify(json));
+        const { handleTag, replyHeaders } = await server.ssrLoadModule('/server/tag.ts') as typeof import('./server/tag');
+        const reply = await handleTag(body);
+        res.statusCode = reply.status;
+        for (const [k, v] of Object.entries(replyHeaders(reply))) res.setHeader(k, v);
+        res.end(JSON.stringify(reply.json));
       });
     },
   };
 }
 
 export default defineConfig(({ mode }) => {
-  // Load ANTHROPIC_API_KEY from .env for the dev server only. Never exposed to the client (no VITE_ prefix).
+  // Load ANTHROPIC_API_KEY / GROQ_API_KEY from .env for the dev server only. Never exposed to the client (no VITE_ prefix).
   Object.assign(process.env, loadEnv(mode, process.cwd(), ''));
   return { plugins: [react(), tagApi()] };
 });
