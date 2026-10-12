@@ -5,6 +5,8 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { flowerColor, hashSeed, mixOklab, TOKENS, type Kind, type MemoryState } from '../../engine';
+import { BloomGrowth } from '../fx/BloomGrowth';
+import { bloomBeats } from '../fx/bloomTimeline';
 import { damp, useReducedMotion } from '../motion';
 import { generateFlower } from './generator';
 import { flowerGeometry } from './geometry';
@@ -39,6 +41,10 @@ export type FlowerProps = {
   onClick?: (e: ThreeEvent<MouseEvent>) => void;
   /** performance.now() when this flower was last tended or reached by a ripple: it swells with light for ~2s. */
   swellAt?: number;
+  /** performance.now() when this flower was planted (or returned to): it grows through the bloom. */
+  bornAt?: number;
+  /** Hold the bloom at this many ms (the bloom sandbox's storyboard frames). Overrides bornAt. */
+  bloomAge?: number;
 };
 
 /** Tending's swell: light rises over 0.4s, then settles back over 1.6s. Returns 0–1. */
@@ -49,10 +55,10 @@ export function swellAmount(sinceMs: number): number {
   return Math.max(0, 1 - (t - 0.4) / 1.6) ** 2;
 }
 
-export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick, swellAt }: FlowerProps) {
+export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPointerOver, onPointerOut, onClick, swellAt, bornAt, bloomAge }: FlowerProps) {
   const data = generateFlower(kind, seed, size);
   const geo = flowerGeometry(data);
-  const uniforms = useMemo(() => makeUniforms(geo.height), [geo]);
+  const uniforms = useMemo(() => makeUniforms(geo.height, new THREE.Vector2(geo.head.x, geo.head.y)), [geo]);
   const mats = useMemo(() => makeMaterials(uniforms), [uniforms]);
   useEffect(() => () => Object.values(mats).forEach((m) => m.dispose()), [mats]);
 
@@ -89,11 +95,16 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
     lit.current.glow += (t.glow - lit.current.glow) * k;
     lit.current.halo += (t.halo - lit.current.halo) * k;
     const swell = swellAt === undefined || reduced ? 0 : swellAmount(performance.now() - swellAt);
-    u.uGlow.value = lit.current.glow + swell * 0.9;
-    u.uHalo.value = lit.current.halo + swell * 0.35;
+    // The bloom: stem rises, petals unfold, then the glow settles in.
+    const age = bloomAge ?? (bornAt === undefined ? Infinity : performance.now() - bornAt);
+    const born = bloomBeats(age, reduced);
+    u.uGrow.value = born.grow;
+    u.uUnfold.value = born.unfold;
+    u.uGlow.value = (lit.current.glow + swell * 0.9) * (0.25 + 0.75 * born.glow);
+    u.uHalo.value = (lit.current.halo + swell * 0.35) * born.glow;
     u.uMotes.value += (t.motes - u.uMotes.value) * k;
     // Dimming (focus, reveal) settles faster than a state change: ~1s.
-    u.uOpacity.value += (dim - u.uOpacity.value) * (first.current ? 1 : damp(3, dt));
+    u.uOpacity.value += (dim * born.opacity - u.uOpacity.value) * (first.current || born.opacity < 1 ? 1 : damp(3, dt));
 
     const time = reduced ? 0 : clock.elapsedTime;
     u.uTime.value = time;
@@ -125,6 +136,8 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
       <mesh geometry={geo.fill} material={mats.fill} />
       <lineSegments geometry={geo.lines} material={mats.lines} />
       <points geometry={geo.motes} material={mats.motes} />
+      {(bloomAge !== undefined || (bornAt !== undefined && performance.now() - bornAt < 2400)) &&
+        <BloomGrowth bornAt={bornAt ?? 0} age={bloomAge} seed={seed} />}
       {/* Invisible hit area: the whole drawing box, so thin flowers are easy to reach. */}
       <mesh position={[0, geo.height / 2, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut} onClick={onClick}>
         <planeGeometry args={[geo.width * 0.7, geo.height]} />

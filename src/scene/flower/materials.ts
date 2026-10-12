@@ -28,15 +28,22 @@ export type FlowerUniforms = {
   uTime: { value: number };
   uStill: { value: number };
   uPixelRatio: { value: number };
+  /** Bloom: stems and leaves are drawn up to uGrow × height (0 → 1 as the stem rises). */
+  uGrow: { value: number };
+  /** Bloom: petals and light parts open out from the head (0 closed → 1 open). */
+  uUnfold: { value: number };
+  /** The head in flower-local units, the point petals unfold from. */
+  uHead: { value: THREE.Vector2 };
 };
 
-export function makeUniforms(height: number): FlowerUniforms {
+export function makeUniforms(height: number, head = new THREE.Vector2()): FlowerUniforms {
   return {
     uColor: { value: new THREE.Color() }, uStem: { value: new THREE.Color() }, uLight: { value: new THREE.Color() },
     uFill: { value: 0 }, uLeafFill: { value: 0 }, uSolid: { value: 0 }, uOutline: { value: 0 }, uLineOp: { value: 0.4 },
     uGlow: { value: 0 }, uHalo: { value: 0 }, uMotes: { value: 0 }, uOpacity: { value: 1 },
     uBend: { value: 0 }, uHeight: { value: height }, uTime: { value: 0 }, uStill: { value: 0 },
     uPixelRatio: { value: 1 },
+    uGrow: { value: 1 }, uUnfold: { value: 1 }, uHead: { value: head.clone() },
   };
 }
 
@@ -46,6 +53,26 @@ vec3 bend(vec3 p) {
   float h = clamp(p.y / uHeight, 0.0, 1.5);
   p.x += uBend * h * h * uHeight;
   return p;
+}`;
+
+/** Bloom growth: petals (part 0) and light parts (part 2+) open out from the head; stems and leaves (part 1) don't move. */
+const GROW = /* glsl */ `
+uniform float uUnfold;
+uniform vec2 uHead;
+vec3 grow(vec3 p, float part) {
+  if (part < 0.5 || part > 1.5) {
+    p.xy = uHead + (p.xy - uHead) * mix(0.06, 1.0, uUnfold);
+    p.z *= uUnfold;
+  }
+  return p;
+}`;
+
+/** Bloom growth in the fragment: stems and leaves appear from the ground up; petals fade in as they open. */
+const REVEAL = /* glsl */ `
+uniform float uGrow, uHeight;
+float reveal(float part, float y) {
+  if (part > 0.5 && part < 1.5) return y > uGrow * uHeight * 1.02 ? 0.0 : 1.0;
+  return smoothstep(0.0, 0.35, uUnfold);
 }`;
 
 /** How much brighter than its colour each part draws at full glow (feeds the bloom pass). */
@@ -59,17 +86,21 @@ const GLOW_DEFINES = /* glsl */ `
 const fillShader = {
   vertexShader: /* glsl */ `
     attribute float aPart, aAlpha, aSolidOnly;
-    varying float vPart, vAlpha, vSolidOnly;
+    varying float vPart, vAlpha, vSolidOnly, vY;
     ${BEND}
+    ${GROW}
     void main() {
-      vPart = aPart; vAlpha = aAlpha; vSolidOnly = aSolidOnly;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(bend(position), 1.0);
+      vPart = aPart; vAlpha = aAlpha; vSolidOnly = aSolidOnly; vY = position.y;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(bend(grow(position, aPart)), 1.0);
     }`,
   fragmentShader: /* glsl */ `${GLOW_DEFINES}
     uniform vec3 uColor, uStem, uLight;
-    uniform float uFill, uLeafFill, uSolid, uGlow, uOpacity;
-    varying float vPart, vAlpha, vSolidOnly;
+    uniform float uFill, uLeafFill, uSolid, uGlow, uOpacity, uUnfold;
+    varying float vPart, vAlpha, vSolidOnly, vY;
+    ${REVEAL}
     void main() {
+      float shown = reveal(vPart, vY);
+      if (shown <= 0.0) discard;
       vec3 col; float a;
       if (vPart < 0.5) { col = uColor; a = uFill * vAlpha; }
       else if (vPart < 1.5) { col = uStem; a = uLeafFill * vAlpha; }
@@ -78,7 +109,7 @@ const fillShader = {
       // Light parts burn a little brighter so the bloom pass gives the flower a warm centre.
       // Tuned against the design-system Bloom page: a soft glow, never blown out to white.
       col *= vPart > 1.5 ? 1.0 + GLOW_LIGHT * uGlow : 1.0 + GLOW_FILL * uGlow;
-      gl_FragColor = vec4(col, a * uOpacity);
+      gl_FragColor = vec4(col, a * shown * uOpacity);
       #include <colorspace_fragment>
     }`,
 };
@@ -86,21 +117,25 @@ const fillShader = {
 const lineShader = {
   vertexShader: /* glsl */ `
     attribute float aPart, aAlpha;
-    varying float vPart, vAlpha;
+    varying float vPart, vAlpha, vY;
     ${BEND}
+    ${GROW}
     void main() {
-      vPart = aPart; vAlpha = aAlpha;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(bend(position), 1.0);
+      vPart = aPart; vAlpha = aAlpha; vY = position.y;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(bend(grow(position, aPart)), 1.0);
     }`,
   fragmentShader: /* glsl */ `${GLOW_DEFINES}
     uniform vec3 uColor, uStem, uLight;
-    uniform float uOutline, uLineOp, uSolid, uGlow, uOpacity;
-    varying float vPart, vAlpha;
+    uniform float uOutline, uLineOp, uSolid, uGlow, uOpacity, uUnfold;
+    varying float vPart, vAlpha, vY;
+    ${REVEAL}
     void main() {
+      float shown = reveal(vPart, vY);
+      if (shown <= 0.0) discard;
       vec3 col = vPart < 0.5 ? uColor : (vPart < 1.5 ? uStem : uLight);
       float a = mix(vAlpha, uLineOp, uOutline);
       if (vPart > 2.5) a = vAlpha * uSolid; // stamens: only while solid
-      gl_FragColor = vec4(col * (1.0 + GLOW_LINE * uGlow), a * uOpacity);
+      gl_FragColor = vec4(col * (1.0 + GLOW_LINE * uGlow), a * shown * uOpacity);
       #include <colorspace_fragment>
     }`,
 };
