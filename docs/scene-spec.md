@@ -102,6 +102,8 @@ All of it is skipped with `prefers-reduced-motion`, except the state change itse
 | 1200 | petals unfold: each petal rotates from closed (folded up 80°) to open, staggered 40ms |
 | 1600 | the glow settles: halo 0 → target, then breathing starts |
 
+*As built:* `src/scene/fx/bloomTimeline.ts` (pure, tested) drives everything. The flower's own shaders reveal stems and leaves from the ground up (`uGrow`) and open petals and light parts out from the head (`uUnfold`, 6% → 100% scale, fading in). `BloomGrowth.tsx` draws the seed, the ground ripple (ring r 0 → 0.6) and 3–5 seeded roots on the ground (drawRange). Halo and glow settle over 1.4–2.2s. Petals open together rather than staggered 40ms (the merged mesh has no per-petal id; a stagger would need one). Reduced motion: a 0.6s crossfade.
+
 **The dissolve: 4.5s, unhurried, never alarming**
 
 | s | beat |
