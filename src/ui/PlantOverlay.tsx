@@ -1,0 +1,123 @@
+// Planting a memory (screens p4–p6; design system PlantField and Overlay).
+// "+ plant" (or N) → what kind of memory? → one line, with the threads it could join → plant: the flower grows
+// where the seed was waiting. Tags come from the offline tagger at once, and from a provider if one answers.
+
+import { useEffect, useRef, type CSSProperties } from 'react';
+import type { Kind } from '../engine';
+import { useGarden } from '../store/garden';
+import { Button, Overlay } from './ds';
+
+const KINDS: Kind[] = ['sentence', 'photo', 'song', 'place'];
+const KIND_HUE: Record<Kind, string> = { sentence: 'var(--sentence)', photo: 'var(--light)', song: 'var(--song)', place: 'var(--place)' };
+/** Screen p5 for a sentence; the design system's PlantField placeholders for the rest. */
+const PLACEHOLDER: Record<Kind, string> = {
+  sentence: 'Something you don’t want to lose…',
+  photo: 'what is in the photograph',
+  song: 'a song, and where you heard it',
+  place: 'a place, and who was there',
+};
+/** Tag after a pause in typing, not on every keystroke. */
+const TAG_AFTER_MS = 600;
+
+export function PlantButton() {
+  const planting = useGarden((s) => s.planting);
+  const canPlant = useGarden((s) => s.canPlantNow());
+  if (planting !== 'closed') return null;
+  return (
+    <Button className="edge bottom-left plant-button" disabled={!canPlant} aria-keyshortcuts="n"
+      onClick={() => useGarden.getState().openPlanting('kind')}>
+      + plant
+    </Button>
+  );
+}
+
+export function PlantOverlay() {
+  const planting = useGarden((s) => s.planting);
+  if (planting === 'kind') return <KindStep />;
+  if (planting === 'field') return <FieldStep />;
+  return null;
+}
+
+function KindStep() {
+  const { setDraftKind, closePlanting } = useGarden.getState();
+  const first = useRef<HTMLButtonElement>(null);
+  useEffect(() => first.current?.focus(), []);
+  return (
+    <Overlay className="plant-overlay surface" title="What kind of memory?" aria-label="what kind of memory"
+      actions={<><span className="interface-sm plant-note">each kind grows a different flower</span>
+        <Button onClick={closePlanting}>cancel</Button></>}>
+      <div className="kind-choices" role="radiogroup" aria-label="kind of memory">
+        {KINDS.map((k, i) => (
+          <button key={k} ref={i === 0 ? first : undefined} type="button" role="radio" aria-checked={false}
+            className="kind-choice interface" onClick={() => setDraftKind(k)}>
+            <span className="kind-seed" style={{ '--lt-hue': KIND_HUE[k] } as CSSProperties} aria-hidden />
+            {k}
+          </button>
+        ))}
+      </div>
+    </Overlay>
+  );
+}
+
+function FieldStep() {
+  const draft = useGarden((s) => s.draft);
+  const photoUrl = useGarden((s) => (s.draft?.photoId ? s.photos[s.draft.photoId]?.url : undefined));
+  const { setDraftKind, setDraftText, setDraftPhoto, dropDraftTag, tagDraft, plantDraft, closePlanting } = useGarden.getState();
+  const input = useRef<HTMLInputElement>(null);
+  const file = useRef<HTMLInputElement>(null);
+
+  useEffect(() => input.current?.focus(), [draft?.kind]);
+  // Tag after a pause in typing; the store aborts a stale provider request when a newer one starts.
+  useEffect(() => {
+    if (!draft) return;
+    const t = setTimeout(() => void tagDraft(), TAG_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [draft?.text, draft?.kind]);
+
+  if (!draft) return null;
+  const chips = draft.tags ? [...draft.tags.people, ...draft.tags.places] : [];
+  const needsPhoto = draft.kind === 'photo' && !draft.photoId;
+  const ready = !!draft.text.trim() && !needsPhoto;
+  const plant = () => { if (ready) void plantDraft(); };
+
+  return (
+    <Overlay className="plant-overlay surface" aria-label="plant a memory"
+      actions={<><Button onClick={closePlanting}>cancel</Button><Button variant="pill" disabled={!ready} onClick={plant}>plant</Button></>}>
+      <div className="lt-plant-kinds" role="radiogroup" aria-label="kind of memory">
+        {KINDS.map((k) => (
+          <button key={k} type="button" role="radio" aria-checked={k === draft.kind}
+            className={`lt-kind interface-sm${k === draft.kind ? ' is-on' : ''}`}
+            style={{ '--lt-hue': k === 'photo' && draft.hue ? draft.hue : KIND_HUE[k] } as CSSProperties}
+            onClick={() => setDraftKind(k)}>{k}</button>
+        ))}
+      </div>
+
+      {draft.kind === 'photo' && (
+        <div className="photo-pick">
+          {photoUrl && <img src={photoUrl} alt="" className="photo-thumb" />}
+          <Button onClick={() => file.current?.click()}>{photoUrl ? 'choose another photograph' : 'choose a photograph'}</Button>
+          <input ref={file} type="file" accept="image/*" hidden
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void setDraftPhoto(f); e.target.value = ''; }} />
+        </div>
+      )}
+
+      <input ref={input} className="memory-lg plant-input" value={draft.text} maxLength={280} aria-label="the memory"
+        placeholder={PLACEHOLDER[draft.kind]} onChange={(e) => setDraftText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); plant(); } }} />
+
+      {chips.length > 0 && (
+        <div className="plant-threads">
+          <span className="interface-sm">threads it could join</span>
+          <div className="plant-chips">
+            {chips.map((t) => (
+              <span key={t.name} className="plant-chip interface">
+                {t.name}
+                <button type="button" className="plant-chip-x" aria-label={`not ${t.name}`} onClick={() => dropDraftTag(t.name)}>×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </Overlay>
+  );
+}
