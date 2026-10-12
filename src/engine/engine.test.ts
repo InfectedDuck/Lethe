@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sampleGarden } from '../data/sample';
 import {
-  C, advance, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant,
+  C, advance, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag,
   retention, returnTo, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf,
 } from './index';
 
@@ -59,6 +59,16 @@ describe('threads', () => {
     plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Grandma Mei' }] }, 0, REAL);
     plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'my grandmother' }] }, 0, REAL);
     expect(g.threads).toHaveLength(0);
+  });
+  it('retag replaces quick offline tags with a provider’s, and redraws threads', () => {
+    const g = sampleGarden(100, REAL);
+    plant(g, { id: 'new', kind: 'sentence', text: 'Tea on her balcony', feelings: [{ name: 'comfort' }] }, 100, REAL);
+    const before = g.threads.filter((t) => t.a === 'new' || t.b === 'new');
+    expect(before.every((t) => t.level === 0)).toBe(true);
+    retag(g, 'new', { people: [{ name: 'Grandma Mei', id: 'person:grandma-mei' }], places: [{ name: 'Hangzhou' }] });
+    const after = g.threads.filter((t) => t.a === 'new' || t.b === 'new');
+    expect(after.find((t) => [t.a, t.b].includes('m1'))?.level).toBe(2);
+    expect(g.memories.new.lastTendedAt).toBe(100);
   });
   it('connected memories fade more slowly', () => {
     const g = emptyGarden(REAL);
