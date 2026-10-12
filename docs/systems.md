@@ -52,7 +52,7 @@ What this means in real time (1 real day = 7 garden days):
 - `gardenNow = lastSeenAt + gardenDaysForRealDays(realDaysSince) + debugOffset`.
 - After 14 real days away, the extra time counts at 25%.
 - `visit()` runs on every load: grant light → `advance()` in 0.25-day steps (so a loss weakens neighbours in order) → summary.
-- **Hidden slider:** press <kbd>`</kbd>. Scrubbing previews the future without committing. **arrive** commits it as a real return visit, with its replay.
+- **Hidden slider:** press <kbd>`</kbd>. Scrubbing previews the future without committing. **arrive** commits it as a real return visit, with its replay. Tending, planting, letting go or returning while the slider is moved first commits the preview the same way, so no action writes timestamps from a preview.
 
 ## Return summary → words
 

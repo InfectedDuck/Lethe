@@ -52,6 +52,11 @@ export const useGarden = create<GardenStore>((set, get) => {
     fn(g, now);
     set(withViews(g, now));
   };
+  /**
+   * The hidden slider only previews. Acting while it is moved forward first commits the previewed time as a
+   * proper return visit (light, losses, summary), so no action ever writes timestamps from a preview.
+   */
+  const commitPreview = () => { if (get().clock.debugOffset !== 0) get().arrive(); };
   const emit = (type: GardenStore['events'][number]['type'], ids: string[]) =>
     set((s) => ({ events: [...s.events.filter((e) => performance.now() - e.at < 8000), ...ids.map((id) => ({ type, id, at: performance.now() }))] }));
 
@@ -78,14 +83,16 @@ export const useGarden = create<GardenStore>((set, get) => {
     focus: (id) => set({ focusedId: id }),
 
     tendMemory: (id) => {
+      commitPreview();
       let rippled: string[] = [];
       mutate((g, now) => { rippled = tend(g, id, now); });
       emit('tend', [id]); emit('ripple', rippled);
     },
-    letGoMemory: (id) => { mutate((g, now) => letGo(g, id, now)); emit('dissolve', [id]); },
-    returnToMemory: (id) => { mutate((g, now) => returnTo(g, id, now)); emit('bloom', [id]); },
+    letGoMemory: (id) => { commitPreview(); mutate((g, now) => letGo(g, id, now)); emit('dissolve', [id]); },
+    returnToMemory: (id) => { commitPreview(); mutate((g, now) => returnTo(g, id, now)); emit('bloom', [id]); },
 
     plantMemory: async (kind, text, extra) => {
+      commitPreview();
       const { garden } = get();
       if (!canPlant(garden, realNow())) return null;
       // Plant at once with the offline tagger (in the browser, no network), so the flower never waits.
