@@ -24,7 +24,8 @@ export function GardenScene() {
       dpr={[1, 1.75]}
       style={{ position: 'absolute', inset: 0 }}
       camera={{ position: HOME_POS.toArray(), fov: 40, near: 0.1, far: 80 }}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      // No MSAA here: the post-processing passes render without it (multisampling={0}), so it would be wasted.
+      gl={{ antialias: false, powerPreference: 'high-performance' }}
       onPointerMissed={() => useGarden.getState().focus(null)}
     >
       <color attach="background" args={[TOKENS.night]} />

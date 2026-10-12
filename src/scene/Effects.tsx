@@ -7,7 +7,10 @@ import { useState } from 'react';
 
 export type Quality = 'high' | 'low';
 
-/** Explicit ?quality=low|high in the URL wins (for testing on a weak laptop). */
+/**
+ * Explicit ?quality=low|high in the URL wins (for testing on a weak laptop). Once quality drops it stays low
+ * for the session: switching back up on a marginal machine would only make it yo-yo.
+ */
 const forced = new URLSearchParams(location.search).get('quality') as Quality | null;
 
 export function Effects() {
@@ -17,7 +20,6 @@ export function Effects() {
     <>
       <PerformanceMonitor
         onDecline={() => { if (!forced) { setQuality('low'); setDpr(1); } }}
-        onIncline={() => { if (!forced) { setQuality('high'); setDpr(Math.min(1.75, window.devicePixelRatio)); } }}
         flipflops={3}
         onFallback={() => { if (!forced) { setQuality('low'); setDpr(1); } }}
       />
