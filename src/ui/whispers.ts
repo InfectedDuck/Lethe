@@ -12,7 +12,14 @@ const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A memory's short name in a whisper: "The library rooftop", "Gymnopédie No. 1". */
 export function nameOf(m: Memory): string {
-  return firstWords(m.text, 4);
+  const short = firstWords(m.text, 4);
+  // A name never ends mid-verb: "You don't have to be brave…" cut at four is "You don't have",
+  // so take two more words. Anything else keeps the short cut ("The library rooftop", never "…at university").
+  const last = short.split(/\s+/).pop() ?? '';
+  if (/^(have|has|had|do|does|did|will|would|can|could|shall|should|may|might|must|is|are|was|were|be|been|being|am)$/i.test(last)) {
+    return firstWords(m.text, 6);
+  }
+  return short;
 }
 
 /** How a memory is named when it is the one holding another: a song by its artist ("Satie"), others by name. */
