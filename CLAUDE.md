@@ -23,9 +23,9 @@ Tagging works with no key: the offline tagger runs in the browser. Optional upgr
 
 ## Architecture rules
 
-- `src/engine/` is pure TypeScript: no React, no Three, no clock, no storage. Time is always a parameter (`now` = garden day, `realNow` = ms). Every number lives in `src/engine/constants.ts`. Changing a rule means updating the test in `engine.test.ts` too.
+- `src/engine/` is pure TypeScript: no React, no Three, no clock, no storage. Time is always a parameter (`now` = garden day, `realNow` = ms). Every tuning number of the garden's rules lives in `src/engine/constants.ts` (design-token mappings such as `STATE_COLOR_SHARE` stay beside their tokens). Changing a rule means updating the test in `engine.test.ts` too.
 - Vitality and state are **derived** (`viewAll(garden, now)`), never stored.
-- Only `src/store/garden.ts` calls engine actions. Scene and UI read `views` from the store.
+- Only `src/store/garden.ts` (and data factories such as `sampleGarden`) call engine actions. Scene and UI read `views` from the store.
 - DOM interface components live in `src/ui/ds.tsx` and use the design-system class names exactly. Flowers and threads are 3D (`src/scene`), never DOM or SVG at runtime.
 - Provider keys never reach the client. `/api/tag` → `server/tag.ts` is the only call to a tagging provider (Claude or Groq), and planting never waits for it: offline tags first, `retag` when a provider answers.
 

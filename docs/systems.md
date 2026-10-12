@@ -60,7 +60,7 @@ What this means in real time (1 real day = 7 garden days):
 
 1. `"{N} days passed."` Use real days, as a word: "Four days passed." Skip it if under 1 day.
 2. If something is about to be lost: `"{name} is about to be lost."` Otherwise, if lost: `"{name} drifted into the fog."` Otherwise, if faded: `"{name} is drifting into fog."`
-3. If the faded or about-to-be-lost memory has a holder: `"{holder} still holds it."` (`stillHeldBy`).
+3. If the faded or about-to-be-lost memory has a holder: `"{holder} still holds it."`, or `"A faint thread to {holder} still holds it."` when that thread is under 0.3 (`holderOf` in `src/ui/whispers.ts`).
 
 Never use counts, "you haven't…", warnings or exclamation marks. Names come from `firstWords(text, 4)` ("The library rooftop", "Gymnopédie No. 1").
 
