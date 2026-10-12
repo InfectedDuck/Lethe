@@ -1,10 +1,11 @@
-// Client side of tagging. Calls /api/tag; if that is unavailable (offline, no key, demo), falls back to
-// matching names the garden already knows, so planting never blocks on the network.
+// Client side of tagging. Asks /api/tag first; if no provider is configured, the network fails or the reply
+// can't be read, the offline tagger (./offline.ts) runs in the browser instead, so planting always gets tags.
 
 import type { Garden, Kind } from '../engine';
 import type { Tags } from '../engine/garden';
+import { offlineTag } from './offline';
 
-export type TagResult = { people: Tags; places: Tags; feelings: Tags; source: 'claude' | 'local' };
+export type TagResult = { people: Tags; places: Tags; feelings: Tags; source: 'api' | 'offline' };
 
 export async function tag(g: Garden, kind: Kind, text: string, signal?: AbortSignal): Promise<TagResult> {
   try {
@@ -16,18 +17,9 @@ export async function tag(g: Garden, kind: Kind, text: string, signal?: AbortSig
     if (!res.ok) throw new Error(String(res.status));
     const j = await res.json() as { people: { name: string; id: string | null }[]; places: { name: string; id: string | null }[]; feelings: string[] };
     const named = (xs: { name: string; id: string | null }[]) => xs.map((x) => ({ name: x.name, id: x.id ?? undefined }));
-    return { people: named(j.people), places: named(j.places), feelings: j.feelings.map((name) => ({ name })), source: 'claude' };
+    return { people: named(j.people), places: named(j.places), feelings: j.feelings.map((name) => ({ name })), source: 'api' };
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
-    return { ...localTag(g, text), source: 'local' };
+    return { ...(await offlineTag(g, kind, text)), source: 'offline' };
   }
-}
-
-/** Offline fallback: find known entity names (and aliases) in the text. */
-export function localTag(g: Garden, text: string): Omit<TagResult, 'source'> {
-  const lower = text.toLowerCase();
-  const hit = (kind: 'person' | 'place' | 'feeling') => Object.values(g.entities)
-    .filter((e) => e.kind === kind && [e.name.toLowerCase(), ...e.aliases].some((n) => n && lower.includes(n)))
-    .map((e) => ({ name: e.name, id: e.id }));
-  return { people: hit('person'), places: hit('place'), feelings: hit('feeling') };
 }
