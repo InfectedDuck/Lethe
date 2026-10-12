@@ -5,7 +5,7 @@ import { sampleGarden } from './sample';
 const REAL = 1_700_000_000_000;
 
 describe('the demo garden', () => {
-  it('leaves today's planting budget untouched, so a visitor can plant at once', () => {
+  it('leaves today’s planting budget untouched, so a visitor can plant at once', () => {
     const g = sampleGarden(100, REAL);
     expect(canPlant(g, REAL)).toBe(true);
     for (let i = 0; i < C.PLANTS_PER_REAL_DAY; i++) {
