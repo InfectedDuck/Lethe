@@ -2,7 +2,7 @@
 // No rendering, no clock, no storage here: `now` (garden day) and `realNow` (ms) are always parameters.
 
 import {
-  ABOUT_TO_BE_LOST_BELOW, FIRST_PLANTINGS, GHOST_AT, LIGHT_MAX, LIGHT_PER_REAL_DAY, MS_PER_REAL_DAY,
+  ABOUT_TO_BE_LOST_BELOW, ADVANCE_STEP_DAYS, FIRST_PLANTINGS, GHOST_AT, LIGHT_MAX, LIGHT_PER_REAL_DAY, MS_PER_REAL_DAY,
   PLANTS_PER_REAL_DAY, RETURN_COST, RETURN_VITALITY, S_INITIAL, TEND_COST, TEND_NEIGHBOUR_SHARE,
   TEND_STABILITY_MULT,
 } from './constants';
@@ -13,7 +13,7 @@ import type { EntityKind, Garden, GardenDay, Kind, Memory, MemoryState, ReturnSu
 
 export function emptyGarden(realNow: number): Garden {
   return {
-    memories: {}, entities: {}, threads: [], rejected: [],
+    memories: {}, entities: {}, threads: [], drawn: [], rejected: [],
     light: LIGHT_MAX, lightGrantedAt: realNow,
     lastSeenAt: 0, lastSeenReal: realNow,
     plantsToday: 0, plantsDay: realDayIndex(realNow), firstPlantingsDone: false,
@@ -149,7 +149,7 @@ export function returnTo(g: Garden, id: string, now: GardenDay): void {
  * Move the garden from `from` to `to`, marking memories lost as they cross the threshold.
  * Steps in small increments because a loss weakens its neighbours' threads.
  */
-export function advance(g: Garden, from: GardenDay, to: GardenDay, step = 0.25): ReturnSummary & { states: { before: Record<string, MemoryState>; after: Record<string, MemoryState> } } {
+export function advance(g: Garden, from: GardenDay, to: GardenDay, step = ADVANCE_STEP_DAYS): ReturnSummary & { states: { before: Record<string, MemoryState>; after: Record<string, MemoryState> } } {
   const beforeViews = viewAll(g, from);
   const lostNow: string[] = [];
   for (let t = from; t < to; t = Math.min(to, t + step)) {
@@ -169,8 +169,10 @@ export function advance(g: Garden, from: GardenDay, to: GardenDay, step = 0.25):
   const faded = Object.keys(afterViews)
     .filter((id) => !lostNow.includes(id) && rank[afterViews[id].state] > rank[beforeViews[id]?.state ?? 'vivid'])
     .sort((a, b) => (beforeViews[b].vitality - afterViews[b].vitality) - (beforeViews[a].vitality - afterViews[a].vitality));
+  // Only ghosts that crossed the line during this stretch: each glows once, not on every visit after.
   const aboutToBeLost = Object.values(afterViews)
-    .filter((v) => v.state === 'ghost' && v.vitality < ABOUT_TO_BE_LOST_BELOW).map((v) => v.id);
+    .filter((v) => v.state === 'ghost' && v.vitality < ABOUT_TO_BE_LOST_BELOW && (beforeViews[v.id]?.vitality ?? 1) >= ABOUT_TO_BE_LOST_BELOW)
+    .map((v) => v.id);
   const states = {
     before: Object.fromEntries(Object.entries(beforeViews).map(([k, v]) => [k, v.state])),
     after: Object.fromEntries(Object.entries(afterViews).map(([k, v]) => [k, v.state])),
@@ -207,22 +209,6 @@ export function holders(g: Garden, now: GardenDay): Holder[] {
     }
   }
   return [...map.values()].sort((a, b) => b.weight - a.weight);
-}
-
-/** For whispers: who still holds a fading memory ("Mira still holds it."). Strongest living neighbour's shared entity name. */
-export function stillHeldBy(g: Garden, id: string, now: GardenDay): string | null {
-  const m = g.memories[id];
-  if (!m) return null;
-  let best: { name: string; score: number } | null = null;
-  for (const { other, thread } of neighbours(g, id)) {
-    const o = g.memories[other];
-    if (!o || o.lost) continue;
-    const score = threadWeight(thread) * vitalityOf(g, o, now);
-    const sharedIds = [...m.people.filter((p) => o.people.includes(p)), ...m.places.filter((p) => o.places.includes(p))];
-    const name = sharedIds.length ? g.entities[sharedIds[0]]?.name : firstWords(o.text, 3);
-    if (name && (!best || score > best.score)) best = { name, score };
-  }
-  return best?.name ?? null;
 }
 
 const DANGLING = /\s+(at|in|of|on|with|the|a|an|and|after|to|for|from|my|her|his)$/i;

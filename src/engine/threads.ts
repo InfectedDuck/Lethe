@@ -1,4 +1,4 @@
-import { FEELING_ONLY_WEIGHT, THREAD_WEIGHT } from './constants';
+import { FEELING_ONLY_WEIGHT, THREAD_FULL_AT, THREAD_WEIGHT } from './constants';
 import { relationKey, relationOf } from './relations';
 import type { Entity, EntityKind, Garden, Memory, Thread } from './types';
 
@@ -48,9 +48,13 @@ export function suggestThreads(g: Garden, m: Memory): Thread[] {
   return out;
 }
 
-/** Recompute auto threads from entities, keep manual ones, drop rejected ones and threads to lost memories. */
+/**
+ * Recompute the active threads: auto threads from shared entities between living memories (minus rejected
+ * ones), plus every drawn thread whose ends are both living. Drawn threads are never forgotten, so returning
+ * a memory re-forms them too (decisions D4).
+ */
 export function rebuildThreads(g: Garden): void {
-  const manual = g.threads.filter((t) => t.source === 'manual');
+  const manual = g.drawn ?? [];
   const ids = Object.keys(g.memories).filter((id) => !g.memories[id].lost);
   const auto: Thread[] = [];
   for (let i = 0; i < ids.length; i++) {
@@ -68,13 +72,14 @@ export function rejectThread(g: Garden, a: string, b: string): void {
   const k = threadKey(a, b);
   if (!g.rejected.includes(k)) g.rejected.push(k);
   g.threads = g.threads.filter((t) => threadKey(t.a, t.b) !== k);
+  g.drawn = (g.drawn ?? []).filter((t) => threadKey(t.a, t.b) !== k);
 }
 
 export function drawThread(g: Garden, a: string, b: string): void {
   const k = threadKey(a, b);
   g.rejected = g.rejected.filter((r) => r !== k);
-  g.threads = g.threads.filter((t) => threadKey(t.a, t.b) !== k);
-  g.threads.push({ a, b, level: 1, source: 'manual' });
+  g.drawn = [...(g.drawn ?? []).filter((t) => threadKey(t.a, t.b) !== k), { a, b, level: 1, source: 'manual' }];
+  rebuildThreads(g);
 }
 
 /* ---------- entity matching: "Mom" and "my mother" become one person ---------- */
@@ -118,5 +123,5 @@ export function resolveEntity(g: Garden, kind: EntityKind, name: string, existin
  * Reproduces the sample strengths: two vivid ends 0.85–0.95, vivid–fading ~0.6, fading–fading ~0.43.
  */
 export function threadBrightness(t: Thread, vitalityA: number, vitalityB: number): number {
-  return threadWeight(t) * Math.min(1, Math.sqrt(Math.max(0, vitalityA * vitalityB)) / 0.9);
+  return threadWeight(t) * Math.min(1, Math.sqrt(Math.max(0, vitalityA * vitalityB)) / THREAD_FULL_AT);
 }

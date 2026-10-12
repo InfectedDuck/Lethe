@@ -49,7 +49,10 @@ export type Thread = {
 export type Garden = {
   memories: Record<string, Memory>;
   entities: Record<string, Entity>;
+  /** Active threads: derived from shared entities, plus drawn ones whose ends are both living. */
   threads: Thread[];
+  /** Threads the person drew by hand. Kept even while an end is lost, so they re-form when it is returned to. */
+  drawn: Thread[];
   /** "a|b" keys of auto threads the person rejected, so they are never suggested again. */
   rejected: string[];
   light: number;
