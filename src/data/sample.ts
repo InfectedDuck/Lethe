@@ -42,6 +42,8 @@ export function sampleGarden(now: number, realNow: number): Garden {
   const g = emptyGarden(realNow);
   for (const s of SAMPLE) plant(g, s, now, realNow);
   g.firstPlantingsDone = true;
+  // The sample memories are the garden's past, not today's plantings: today's budget starts untouched.
+  g.plantsToday = 0;
   // Set vitality only after every memory exists, so effective stability includes all threads.
   for (const s of SAMPLE) setVitality(g, s.id, s.vitality, now);
   g.light = 3;
