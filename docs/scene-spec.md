@@ -11,7 +11,7 @@ How each design-system rule becomes a Three.js parameter. The look reference is 
 | flower height | 1.5 × size / 100 (a 160px sentence flower is 2.4 units tall) |
 | camera | perspective, fov 40, default position (0, 3.4, 11.5), looking at (0, 1.1, 0) |
 | drift | x ± 0.8 over 40s, y ± 0.15 over 55s. Never still, never fast. |
-| focus | glide (exponential damping k = 1.2/s) to head + (1.2, 0.4, 4.2); the memory text sits on the right half |
+| focus | look at head + (1.0, 0, 0) from there + (0, 0.35, 4.4), gliding with damping k = 1.2/s. The flower stands at about a third of the width, its words on the right half (left 54%). Other flowers recede to opacity 0.3 over ~1s and every thread dims to ×0.35 (screen p2). |
 | overview | scroll out → rise to (0, 9, 6) looking down at 50°; the reveal uses this |
 | limits | orbit azimuth ±25°, polar 55–85°, distance 4–16 (drei `OrbitControls`, damping on, pan off) |
 | background | `night` #0b0e14; ground #0d1119 with a soft radial lighten under clusters |
@@ -76,6 +76,18 @@ Use `flowerColor(kind, state, hue)` from `src/engine/color.ts`. It is tested to 
 - **Density follows neglect:** thin opacity = (0.06 + 0.10 × share of memories that are not vivid) / 3.
 - **Ground** (`src/scene/ground/Ground.tsx`): #0d1119, lifted under each thread-connected cluster by its average vitality, with two faint elliptical rings per cluster (screens p1/p3), fading to night beyond about 9–24 units.
 - **Depth:** fainter memories sit behind thicker fog. Put one bank between the camera and each ghost.
+
+## Tending feedback (P5)
+
+| beat | value |
+|---|---|
+| light mote | DOM dot, 6px, `light` + `glow-light`, from the dimmed counter dot to the flower head in 600ms, ease-in-out, rising in a 60px arc, re-aimed every frame |
+| counter dot | dims over 0.6s (CSS transition) |
+| flower swell | glow +0.9, halo +0.35: rises over 0.4s (sine), settles over 1.6s (quadratic) |
+| ripple | a point at 2× pulse brightness crosses each of the flower's threads in 900ms, away from it; the core brightens up to ×1.8 as it passes; shown even on faint threads |
+| neighbour swell | starts when the ripple arrives (+900ms) |
+
+All of it is skipped with `prefers-reduced-motion`, except the state change itself.
 
 ## Hero moments (timings from the storyboards)
 

@@ -15,7 +15,7 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | P2 | Scene look: fog, ground, camera, post | must | 1.5h | 🟨 done except P2.1 deploy (needs your Vercel login) |
 | P3 | **Flowers**: procedural Bloom in 3D, 4 kinds × 4 states | must | 3.5h | ✅ done (ghost petals falling → P7) |
 | P4 | Threads: arcs, pulse, motes, hover | must | 1h | ✅ done |
-| P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ⬜ partly |
+| P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ✅ done |
 | P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ⬜ partly |
 | P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ⬜ partly (engine done) |
 | — | **cut line: below here is optional if behind** | | | |
@@ -92,11 +92,11 @@ gantt
 
 *Look ref:* screens p1 (hover), p2 (focus).
 
-- [ ] **P5.1 Recollection beside the flower (40m).** Project the flower head to the screen each frame (`vector.project(camera)`). Place the Recollection `space-3` away on the side with more open ground, with `space-5` clear. Hover uses `memory` (24px); focus uses `size="lg"` (32px) on the right half (screen p2).
-- [ ] **P5.2 Tend feedback (40m).** On `tend` events: a light mote travels from the LightCounter to the flower (0.6s), the counter dot dims, the flower brightens over 1.2s, and a ripple runs along each thread to neighbours (pulse at 2× brightness).
-- [ ] **P5.3 Whispers (20m).** Move the whisper logic out of App into `src/ui/whispers.ts` following systems.md § Return summary → words. One at a time, hide after 6s or on pointer move.
-- [ ] **P5.4 Keyboard + a11y (20m).** <kbd>N</kbd> opens planting, <kbd>Esc</kbd> closes focus, <kbd>Tab</kbd> cycles flowers (hidden buttons with `aria-label` = first words), focus ring per design system, and `prefers-reduced-motion`.
-- **Gate:** hover, focus, tend, ripple and let go, end to end, with nothing jumping.
+- [x] **P5.1 Recollection beside the flower (40m).** Project the flower head to the screen each frame (`vector.project(camera)`). Place the Recollection `space-3` away on the side with more open ground, with `space-5` clear. Hover uses `memory` (24px); focus uses `size="lg"` (32px) on the right half (screen p2).
+- [x] **P5.2 Tend feedback (40m).** On `tend` events: a light mote travels from the LightCounter to the flower (0.6s), the counter dot dims, the flower brightens over 1.2s, and a ripple runs along each thread to neighbours (pulse at 2× brightness).
+- [x] **P5.3 Whispers (20m).** Move the whisper logic out of App into `src/ui/whispers.ts` following systems.md § Return summary → words. One at a time, hide after 6s or on pointer move.
+- [x] **P5.4 Keyboard + a11y (20m).** <kbd>N</kbd> opens planting, <kbd>Esc</kbd> closes focus, <kbd>Tab</kbd> cycles flowers (hidden buttons with `aria-label` = first words), focus ring per design system, and `prefers-reduced-motion`.
+- **Gate:** hover, focus, tend, ripple and let go, end to end, with nothing jumping. *Passed in screenshots* (look log 20261012-1730-*). While a memory is open, the rest of the garden recedes to 30% and all threads dim, so no light crosses its words (screen p2). Keyboard focus was verified from the DOM, because headless Edge drops focus when it captures.
 
 ## P6 · Planting + the bloom (2.5h, must)
 
