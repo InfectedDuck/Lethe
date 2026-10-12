@@ -7,7 +7,7 @@ const typing = (el: Element | null) =>
 /**
  * Garden keys (design system PlantField / Overlay):
  *   N    → plant: open the planting field
- *   Esc  → put down the planting field, or close an open memory
+ *   Esc  → close the reveal, put down the planting field, or close an open memory
  * Tab moves through the flowers (FlowerTargets); ` opens the hidden time slider (TimeSlider).
  */
 export function useGardenKeys() {
@@ -21,8 +21,11 @@ export function useGardenKeys() {
         return;
       }
       if (e.key === 'Escape') {
-        const { focusedId, focus, planting, closePlanting } = useGarden.getState();
-        if (planting !== 'closed') {
+        const { focusedId, focus, planting, closePlanting, reveal, closeReveal } = useGarden.getState();
+        if (reveal.open) {
+          closeReveal();
+          document.querySelector<HTMLButtonElement>('.reveal-entry')?.focus();
+        } else if (planting !== 'closed') {
           closePlanting();
           document.querySelector<HTMLButtonElement>('.plant-button')?.focus();
         } else if (focusedId) {

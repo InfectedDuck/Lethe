@@ -83,6 +83,28 @@ html, body, #root { height: 100%; overflow: hidden; }
 .prompt-dots { display: inline-flex; gap: var(--space-2); margin-right: auto; }
 .prompt-dots .lt-light-dot.is-here { opacity: 1; border-color: var(--text-primary); }
 
+/* Top-left: the name, and the quiet way into the reveal. */
+.top-left-row { display: flex; align-items: center; gap: var(--space-3); }
+
+/* The reveal (screen p12): a column of light on the left, no panel behind it; the garden glows to its right. */
+.reveal { position: absolute; left: 64px; top: 16%; bottom: var(--space-4); width: min(330px, 34vw); display: flex; flex-direction: column; z-index: 4; }
+.reveal-title { margin: 0 0 var(--space-4); color: var(--text-primary); }
+.reveal-empty { color: var(--fog); }
+.reveal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.reveal-holder { appearance: none; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: baseline;
+  gap: var(--space-2) var(--space-3); padding: 10px var(--space-3) 12px; background: none; border: 1px solid transparent;
+  border-radius: var(--radius-overlay); cursor: pointer; text-align: left; transition: background-color .6s ease, border-color .6s ease; }
+.reveal-holder.is-on { background: var(--overlay-fill); border-color: var(--overlay-border); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.reveal-name { font-family: var(--font-display); font-size: 24px; line-height: 30px; color: var(--text-primary); }
+.reveal-count { color: var(--fog); }
+.reveal-line { grid-column: 1 / -1; height: 2px; border-radius: var(--radius-pill); opacity: .45;
+  background: linear-gradient(90deg, var(--thread), color-mix(in oklab, var(--thread) 30%, transparent));
+  box-shadow: 0 0 6px rgba(255, 244, 224, 0.25); transition: opacity .6s ease; }
+.reveal-holder.is-on .reveal-line, .reveal-holder:hover .reveal-line { opacity: 1; }
+.reveal-back { margin-top: auto; align-self: flex-start; }
+.reveal-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reveal-label { position: absolute; top: 0; left: 0; color: var(--text-primary); white-space: nowrap; text-shadow: var(--glow-text); }
+
 @media (prefers-reduced-motion: reduce) {
   .threshold-seed { animation: none; }
   .surface { animation: none; }

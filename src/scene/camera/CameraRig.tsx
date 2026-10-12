@@ -24,6 +24,13 @@ const FOCUS_LOOK_SHIFT = new THREE.Vector3(1.0, 0, 0);
 const FOCUS_OFFSET = new THREE.Vector3(0, 0.7, 4.4);
 
 const DEG = Math.PI / 180;
+/**
+ * The reveal (scene-spec § The reveal, screen p12): rise over the garden and look down at ~36°, with the garden
+ * shifted right of centre so the list of people and places has the left of the screen.
+ */
+const REVEAL_TARGET = new THREE.Vector3(-2.4, 0.4, 0.6);
+const REVEAL_POS = new THREE.Vector3(-2.4, 7.2, 10.0);
+const REVEAL_MIN_POLAR = 45 * DEG;
 /** Polar limits (scene-spec): 55°–83°. Zooming out lowers the ceiling from 83° to 55°, so the camera rises. */
 const MIN_POLAR = 55 * DEG;
 const NEAR = { dist: 11.5, maxPolar: 83 * DEG };
@@ -51,6 +58,8 @@ export function CameraRig() {
   /** The focused memory's framing, worked out once per focus rather than every frame. */
   const focus = useRef<{ id: string | null; lost?: boolean; overridden: boolean; target?: THREE.Vector3; pos?: THREE.Vector3 }>({ id: null, overridden: false });
   const drift = useRef(new THREE.Vector3());
+  /** The reveal's pose holds until the person moves the camera themselves. */
+  const reveal = useRef({ open: false, overridden: false });
   const want = useRef(new THREE.Vector3());
 
   useFrame((_, dt) => {
@@ -73,11 +82,18 @@ export function CameraRig() {
       const target = point?.add(FOCUS_LOOK_SHIFT);
       focus.current = { id: focusedId, lost: focusedLost, overridden: false, target, pos: target?.clone().add(FOCUS_OFFSET) };
     }
+    const revealing = useGarden.getState().reveal.open;
+    if (revealing !== reveal.current.open) reveal.current = { open: revealing, overridden: false };
+    c.minPolarAngle = revealing ? REVEAL_MIN_POLAR : MIN_POLAR;
     if (dragging.current) return;
 
     const f = focus.current;
     let wantTarget: THREE.Vector3;
-    if (f.id && f.target && f.pos) {
+    if (revealing) {
+      if (reveal.current.overridden) return;
+      wantTarget = REVEAL_TARGET;
+      want.current.copy(REVEAL_POS);
+    } else if (f.id && f.target && f.pos) {
       if (f.overridden) return; // the person moved the camera while focused: leave it where they put it
       wantTarget = f.target;
       want.current.copy(f.pos);
@@ -87,7 +103,7 @@ export function CameraRig() {
       const weight = reduced ? 0 : THREE.MathUtils.smoothstep(idle, IDLE_S, IDLE_S + DRIFT_FADE_S);
       want.current.copy(rest.current.pos).addScaledVector(driftAt(t, drift.current), weight);
     }
-    const k = damp(f.id ? 1.2 : 0.8, dt);
+    const k = damp(f.id || revealing ? 1.2 : 0.8, dt);
     camera.position.lerp(want.current, k);
     c.target.lerp(wantTarget, k);
     c.update();
@@ -115,6 +131,7 @@ export function CameraRig() {
         lastTouch.current = clock.elapsedTime;
         const c = controls.current;
         if (!c) return;
+        if (reveal.current.open) { reveal.current.overridden = true; return; }
         if (focus.current.id) { focus.current.overridden = true; return; }
         rest.current.pos.copy(camera.position);
         rest.current.target.copy(c.target);

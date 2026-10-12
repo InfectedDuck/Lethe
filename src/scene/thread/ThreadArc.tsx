@@ -34,6 +34,9 @@ export type ThreadArcProps = {
 
 export const HOVER_LIT = 1.4;
 export const HOVER_DIM = 0.35;
+/** The reveal: the chosen holder's threads brighten × 1.6, every other thread drops to 5%. */
+export const REVEAL_LIT = 1.6;
+export const REVEAL_DIM = 0.05;
 /** A pulse takes this long to cross a thread, then rests until its period comes round. */
 const PULSE_TRAVEL_S = 1.8;
 /** A tending ripple crosses a thread in this long; the neighbour swells as it arrives. */

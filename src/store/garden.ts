@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import {
-  canPlant, emptyGarden, gardenNow, letGo, plant, retag, returnTo, tend, viewAll, visit,
+  canPlant, emptyGarden, gardenNow, holders, letGo, plant, retag, returnTo, tend, viewAll, visit,
   type Garden, type Kind, type MemoryView, type ReturnSummary,
 } from '../engine';
 import type { Tags } from '../engine/garden';
@@ -67,6 +67,8 @@ type GardenStore = {
   promptIndex: number;
   /** A line the garden says over everything else for a moment ("A season passes."). */
   whisperOverride: string | null;
+  /** "What holds your garden" (P9, screen p12): open, and which person or place is lit. */
+  reveal: { open: boolean; entityId: string | null };
   draft: Draft | null;
 
   now: () => number;
@@ -92,6 +94,10 @@ type GardenStore = {
   /** First plantings: plant the current prompt's memory, or skip it. */
   plantPrompt: (text: string, photo?: File) => Promise<void>;
   skipPrompt: () => void;
+  /** The reveal: open it (lighting what holds the most), choose a person or place, close it. */
+  openReveal: () => void;
+  selectHolder: (entityId: string) => void;
+  closeReveal: () => void;
 
   openPlanting: (step?: Exclude<PlantingStep, 'closed'>, kind?: Kind) => void;
   closePlanting: () => void;
@@ -198,6 +204,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     owner: 'demo',
     promptIndex: 0,
     whisperOverride: null,
+    reveal: { open: false, entityId: null },
     draft: null,
 
     now: () => {
@@ -285,7 +292,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        whisperOverride: null, owner: 'demo',
+        whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'demo',
       });
     },
 
@@ -304,7 +311,7 @@ export const useGarden = create<GardenStore>((set, get) => {
         garden: stored.garden, views, shown: views, replaying: false, positions: stored.layout,
         photos: Object.fromEntries(Object.entries(photos).map(([id, blob]) => [id, { blob, url: URL.createObjectURL(blob) }])),
         events: [], tagSources: {}, clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null,
-        planting: 'closed', draft: null, whisperOverride: null,
+        planting: 'closed', draft: null, whisperOverride: null, reveal: { open: false, entityId: null },
         owner: 'own', promptIndex: stored.promptIndex,
         phase: stored.promptIndex < FIRST_PROMPTS.length ? 'first' : 'garden',
       });
@@ -319,7 +326,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, photos: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        phase: 'first', promptIndex: 0, whisperOverride: null, owner: 'own',
+        phase: 'first', promptIndex: 0, whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'own',
       });
     },
 
@@ -338,6 +345,16 @@ export const useGarden = create<GardenStore>((set, get) => {
       await get().plantMemory(prompt.kind, text.trim(), { ...extra, place: FIRST_PLANTING_PLACES[i] });
     },
     skipPrompt: () => advancePrompt(),
+
+    /* ---------- the reveal: what holds your garden (P9) ---------- */
+
+    openReveal: () => {
+      const top = holders(get().garden, get().now())[0];
+      draftRequest?.abort();
+      set({ reveal: { open: true, entityId: top?.entityId ?? null }, focusedId: null, hoveredId: null, planting: 'closed', draft: null });
+    },
+    selectHolder: (entityId) => set({ reveal: { open: true, entityId } }),
+    closeReveal: () => set({ reveal: { open: false, entityId: null } }),
 
     /* ---------- planting (screens p4–p6) ---------- */
 
@@ -417,4 +434,19 @@ useGarden.subscribe((s, prev) => {
 if (typeof addEventListener !== 'undefined') {
   addEventListener('pagehide', () => { if (keepTimer) keepNow(); });
   addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && keepTimer) keepNow(); });
+}
+
+/** The living memories a person or place holds (the reveal lights these). */
+export function heldBy(g: Garden, entityId: string | null): string[] {
+  if (!entityId) return [];
+  return Object.values(g.memories)
+    .filter((m) => !m.lost && (m.people.includes(entityId) || m.places.includes(entityId)))
+    .map((m) => m.id);
+}
+
+/** What the reveal lights right now: the chosen holder's memories, or null when the reveal is closed. */
+export function useRevealHeld(): string[] | null {
+  const reveal = useGarden((s) => s.reveal);
+  const garden = useGarden((s) => s.garden);
+  return reveal.open ? heldBy(garden, reveal.entityId) : null;
 }
