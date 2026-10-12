@@ -19,7 +19,7 @@ npm run sim         # forgetting simulation: npm run sim -- daily|lazy|none
 npm run build
 ```
 
-Tagging needs `ANTHROPIC_API_KEY` in `.env` (server only). Without it, planting still works with local tags.
+Tagging works with no key: the offline tagger runs in the browser. Optional upgrades, server-side only, in `.env` or Vercel: `GROQ_API_KEY` (free tier) or `ANTHROPIC_API_KEY` (Claude wins if both are set).
 
 ## Architecture rules
 
@@ -27,7 +27,7 @@ Tagging needs `ANTHROPIC_API_KEY` in `.env` (server only). Without it, planting 
 - Vitality and state are **derived** (`viewAll(garden, now)`), never stored.
 - Only `src/store/garden.ts` calls engine actions. Scene and UI read `views` from the store.
 - DOM interface components live in `src/ui/ds.tsx` and use the design-system class names exactly. Flowers and threads are 3D (`src/scene`), never DOM or SVG at runtime.
-- The API key never reaches the client. `/api/tag` → `server/tag.ts` is the only Claude call.
+- Provider keys never reach the client. `/api/tag` → `server/tag.ts` is the only call to a tagging provider (Claude or Groq), and planting never waits for it: offline tags first, `retag` when a provider answers.
 
 ## The four pillars (check every change against them)
 
