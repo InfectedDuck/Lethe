@@ -2,6 +2,7 @@
 // Screens still to build (threshold, first plantings, return, reveal, settings) are tasks in docs/build-plan.md.
 
 import { useEffect, useState } from 'react';
+import { preloadOfflineTagger } from './tagging/offline';
 import { C, firstWords, stillHeldBy } from './engine';
 import { DEFAULT_WHISPER } from './data/sample';
 import { GardenScene } from './scene/GardenScene';
@@ -9,6 +10,8 @@ import { useGarden } from './store/garden';
 import { Button, LightCounter, PlantField, Recollection, Whisper } from './ui/ds';
 
 export function App() {
+  // Fetch the offline tagger's NLP library in the background, so the first planting never waits for it.
+  useEffect(preloadOfflineTagger, []);
   return (
     <div className="stage">
       <GardenScene />
