@@ -38,7 +38,7 @@ What this means in real time (1 real day = 7 garden days):
 - **Brightness on screen** = weight × min(1, √(vA·vB) / 0.9). This reproduces the sample strengths: Mei 1–2 = 0.95, vivid–fading = ~0.6, fading–fading = ~0.43.
 - The person can **reject** a suggested thread (it's never suggested again) or **draw** one by hand (`source: 'manual'`, level 1).
 - Threads to lost memories disappear (`rebuildThreads`). Returning a memory re-forms them.
-- **Entity matching.** Claude gets the known entities and returns their ids when a new name matches ("my mother" → `person:mother`). The engine also normalises names locally: lowercase, strips "my/the", strips possessive `'s`, and keeps aliases.
+- **Entity matching.** A provider (Claude or Groq) gets the known entities and returns their ids when a new name matches. Whatever the source, the engine normalises names: lowercase, strips "my/our/the" and a possessive `'s`, keeps aliases, and maps relation words to one person (`src/engine/relations.ts`: "Mom", "mum", "my mother" → **Mom**; "my grandmother" → **Grandma**). A named relative ("Grandma Mei") stays a different person from an unnamed one ("Grandma").
 
 ## Tending and light
 
@@ -68,17 +68,34 @@ Never use counts, "you haven't…", warnings or exclamation marks. Names come fr
 
 `holders(garden, now)` ranks people and places by Σ vitality of the living memories that mention them. Selecting one dims everything except those memories and the threads between them.
 
-## Tagging contract
+## Tagging
 
-`POST /api/tag` with `{ kind, text (≤400), known: [{id, kind, name}] }` returns `{ people: [{name, id|null}], places: [{name, id|null}], feelings: string[] }`.
+Every memory is tagged in the browser first, then optionally upgraded by a provider (decisions D13).
 
-| status | meaning | client does |
+**Offline tagger** (`src/tagging/offline.ts`, the default):
+
+| finds | how |
+|---|---|
+| names the garden already knows | word-boundary match on names and aliases, so their ids are reused |
+| family and friends by relation | `RELATIONS`: "Mom", "Dad", "Grandma", "my sister", "my best friend" (and "Grandma Mei", "my sister Ana" as named people) |
+| new people | compromise's people, plus capitalised mid-sentence names it doesn't know ("with Leo", "and Priya"), plus a sentence-initial name followed by "and me" or a past-tense verb ("Leo and me…") |
+| places | compromise's places, a capitalised name after in/at/near/from/to/around, and everyday places (home, school, university, …) |
+| feelings | `src/tagging/feelings.ts`: 129 words and phrases mapped to 11 feelings, at most two per memory |
+
+Song memories skip their "title, artist." part, so the composer is never a person in the garden. compromise loads lazily (348 KB, about 143 KB gzipped), fetched as soon as the garden opens.
+
+**Provider** (`server/tag.ts`, optional): Claude `claude-haiku-5-5` if `ANTHROPIC_API_KEY` is set, else Groq `openai/gpt-oss-20b` with a strict JSON schema if `GROQ_API_KEY` is set, else 503. Both answers are validated against the same zod schema.
+
+`POST /api/tag` with `{ kind, text (≤400), known: [{id, kind, name}] }` returns `{ people: [{name, id|null}], places: [{name, id|null}], feelings: string[] }` and an `x-lethe-tagger: claude|groq` header.
+
+| status | meaning | client does (`src/tagging/tag.ts`) |
 |---|---|---|
-| 200 | tags | show as suggested threads |
-| 400 | bad body | local fallback |
-| 429 | busy | local fallback |
-| 502 | API error | local fallback |
-| 503 | no key configured | local fallback (the demo works with no key) |
+| 200 | tags | replace the offline tags (`retag`) |
+| 400 | bad body | keep offline tags |
+| 429 | provider rate limit | keep offline tags; don't ask again for 3 minutes, or the `retry-after`, whichever is longer |
+| 502 | provider error, or a reply in the wrong shape | keep offline tags; ask again next time |
+| 503 | no key configured | keep offline tags; don't ask again this session |
+| 504, or no reply in 2.5s | slow | keep offline tags; ask again next time |
 
 ## Sound (Tone.js), mapped to events
 
