@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { C } from './engine';
 import { GardenScene } from './scene/GardenScene';
 import { useGarden } from './store/garden';
+import { listenForFirstGesture } from './sound/sound';
 import { preloadOfflineTagger } from './tagging/offline';
 import { Button, LightCounter } from './ui/ds';
 import { FirstPlantings } from './ui/FirstPlantings';
@@ -14,6 +15,7 @@ import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
 import { Reveal, RevealEntry } from './ui/Reveal';
 import { Settings, SettingsEntry } from './ui/Settings';
+import { SoundToggle } from './ui/SoundToggle';
 import { TendMote } from './ui/TendMote';
 import { Threshold } from './ui/Threshold';
 import { useGardenKeys } from './ui/useGardenKeys';
@@ -21,6 +23,8 @@ import { useGardenKeys } from './ui/useGardenKeys';
 export function App() {
   // Fetch the offline tagger's NLP library in the background, so the first planting never waits for it.
   useEffect(preloadOfflineTagger, []);
+  // Sound starts with the first click or key press (browsers need a gesture before audio).
+  useEffect(listenForFirstGesture, []);
   useGardenKeys();
   const phase = useGarden((s) => s.phase);
   // Before the garden opens (threshold, first plantings), only the flowers and the card are on screen (p7–p10).
@@ -38,6 +42,7 @@ export function App() {
         </div>
       )}
       {inGarden && <Light />}
+      {phase !== 'threshold' && <SoundToggle className="edge bottom-right sound-toggle" />}
       <HoverRecollection />
       <FocusRecollection />
       {inGarden && !revealing && !settling && <PlantButton />}
