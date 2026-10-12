@@ -61,8 +61,8 @@ export function Ground() {
 
   // Clusters change only when the garden or views change; strengths ease over ~3s each frame.
   const garden = useGarden((s) => s.garden);
-  const views = useGarden((s) => s.views);
-  const clusters = useMemo(() => clustersOf(garden, views, layout).slice(0, MAX_SPOTS), [garden, views, layout]);
+  const shown = useGarden((s) => s.shown);
+  const clusters = useMemo(() => clustersOf(garden, shown, layout).slice(0, MAX_SPOTS), [garden, shown, layout]);
 
   useFrame((_, dt) => {
     const spots = mat.uniforms.uSpots.value as THREE.Vector4[];

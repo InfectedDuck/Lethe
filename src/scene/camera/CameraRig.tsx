@@ -49,7 +49,7 @@ export function CameraRig() {
   const lastTouch = useRef(-Infinity);
   const dragging = useRef(false);
   /** The focused memory's framing, worked out once per focus rather than every frame. */
-  const focus = useRef<{ id: string | null; overridden: boolean; target?: THREE.Vector3; pos?: THREE.Vector3 }>({ id: null, overridden: false });
+  const focus = useRef<{ id: string | null; lost?: boolean; overridden: boolean; target?: THREE.Vector3; pos?: THREE.Vector3 }>({ id: null, overridden: false });
   const drift = useRef(new THREE.Vector3());
   const want = useRef(new THREE.Vector3());
 
@@ -63,11 +63,15 @@ export function CameraRig() {
     c.maxPolarAngle = THREE.MathUtils.lerp(NEAR.maxPolar, FAR.maxPolar, THREE.MathUtils.smoothstep(dist, NEAR.dist, FAR.dist));
 
     const { focusedId, garden } = useGarden.getState();
-    if (focusedId !== focus.current.id) {
+    // Re-frame when the focus changes, or when the open memory is lost or returned (seed ↔ flower).
+    const focusedLost = focusedId ? garden.memories[focusedId]?.lost : undefined;
+    if (focusedId !== focus.current.id || focusedLost !== focus.current.lost) {
       const m = focusedId ? garden.memories[focusedId] : null;
       const L = focusedId ? layout[focusedId] : null;
-      const target = m && L ? flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y)).add(FOCUS_LOOK_SHIFT) : undefined;
-      focus.current = { id: focusedId, overridden: false, target, pos: target?.clone().add(FOCUS_OFFSET) };
+      // A lost memory is only its dark seed: come close to the seed on the ground.
+      const point = m && L ? (m.lost ? baseToWorld(L.x, L.y).setY(0.35) : flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y))) : undefined;
+      const target = point?.add(FOCUS_LOOK_SHIFT);
+      focus.current = { id: focusedId, lost: focusedLost, overridden: false, target, pos: target?.clone().add(FOCUS_OFFSET) };
     }
     if (dragging.current) return;
 
