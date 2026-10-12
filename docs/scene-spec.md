@@ -119,6 +119,13 @@ All of it is skipped with `prefers-reduced-motion`, except the state change itse
 
 **The reveal.** Rise to the overview. Every flower not held by the chosen person or place dims to 15%, and its threads to 5%. The held threads brighten × 1.6, and labels show beside each held flower (DOM, `interface-sm`).
 
+## Return replay and dissolve (P7, as built)
+
+- **Replay** (`arrive()` in the store): the scene draws `shown`, not `views`. On arrive, `shown` starts as the garden was at the last visit; memories that changed move to their new state one by one, 260ms apart, most changed first, each easing over ~3s, and fog, ground and threads follow `shown`. Lost memories start to dissolve 1.5s after their turn; ghosts newly about to be lost "beckon" (a 2s swell of halo) 3s after theirs. Any action ends the replay.
+- **Dissolve** (`src/scene/fx/dissolveTimeline.ts`): 0–1.6s the ghost's look; 0.8–1.6s petals and light parts drift off the head and fade (`uDetach`); 1.6–4.5s the particles scatter once from the flower's anchors (`uScatter`); 1.6–3.6s stems fade to half; 3.8–4.5s the dark seed appears (`DarkSeed.tsx`); then the lost look settles (particles drifting at 0.55).
+- **Threads to a dissolving memory** stay drawn after the engine drops them: they flicker from 2.6s and go out at 3.6s over ~0.8s (`threadDeparture`). Every thread also has its own visibility fade, so a thread waiting for its first pulse or gone out is fully invisible, not left at the core's 0.12 floor.
+- **Slider**: scrubbing previews (threads to memories that look lost are hidden), **arrive** replays, **reset demo garden** puts the ten sample memories back.
+
 ## Post-processing
 
 | pass | settings | low quality |
