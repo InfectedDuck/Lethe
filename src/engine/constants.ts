@@ -13,6 +13,12 @@ export const THREAD_STABILITY_BONUS = 5;
 /** The thread bonus saturates at this many garden days, so a hub memory can't become immortal. Found by npm run sim. */
 export const THREAD_BONUS_CAP = 8;
 
+/** A thread draws at full brightness once its two ends' combined vitality √(vA·vB) reaches this. */
+export const THREAD_FULL_AT = 0.9;
+
+/** advance() checks for losses this often (garden days), so a loss weakens its neighbours in order. */
+export const ADVANCE_STEP_DAYS = 0.25;
+
 /** Tending a memory gives each neighbour back this share × thread weight of what it has lost. */
 export const TEND_NEIGHBOUR_SHARE = 0.3;
 

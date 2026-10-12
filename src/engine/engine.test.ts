@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { sampleGarden } from '../data/sample';
 import {
-  C, advance, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag, threadBrightness,
-  retention, returnTo, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf,
+  C, advance, drawThread, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag, threadBrightness,
+  retention, returnTo, setVitality, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf,
 } from './index';
 
 const REAL = 1_700_000_000_000;
@@ -153,6 +153,40 @@ describe('loss and return', () => {
     const g = sampleGarden(100, REAL);
     letGo(g, 'm8', 100);
     expect(g.threads.some((t) => t.a === 'm8' || t.b === 'm8')).toBe(false);
+  });
+});
+
+describe('return details', () => {
+  it('aboutToBeLost names only ghosts that newly crossed the line, so each glows once', () => {
+    const g = sampleGarden(100, REAL);
+    // The rooftop starts at 0.1, already below 0.12: it must not be reported again.
+    expect(advance(g, 100, 100.1).aboutToBeLost).not.toContain('m10');
+    const h = sampleGarden(100, REAL);
+    setVitality(h, 'm9', 0.125, 100);
+    const s = advance(h, 100, 100.5);
+    expect(viewOf(h, 'm9', 100.5).vitality).toBeLessThan(C.ABOUT_TO_BE_LOST_BELOW);
+    expect(s.aboutToBeLost).toContain('m9');
+  });
+
+  it('a hand-drawn thread re-forms when a memory is returned to', () => {
+    const g = sampleGarden(100, REAL);
+    drawThread(g, 'm3', 'm5');
+    const has = () => g.threads.some((t) => threadKey(t.a, t.b) === threadKey('m3', 'm5'));
+    expect(has()).toBe(true);
+    letGo(g, 'm5', 100);
+    expect(has()).toBe(false);
+    returnTo(g, 'm5', 100);
+    expect(has()).toBe(true);
+  });
+
+  it('return costs one light and comes back as a ghost with fresh stability', () => {
+    const g = sampleGarden(100, REAL);
+    letGo(g, 'm7', 100);
+    const light = g.light;
+    returnTo(g, 'm7', 100);
+    expect(g.light).toBe(light - C.RETURN_COST);
+    expect(g.memories.m7.stability).toBe(C.S_INITIAL);
+    expect(viewOf(g, 'm7', 100).vitality).toBeCloseTo(C.RETURN_VITALITY, 5);
   });
 });
 
