@@ -17,7 +17,7 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | P4 | Threads: arcs, pulse, motes, hover | must | 1h | ✅ done |
 | P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ✅ done |
 | P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ✅ done |
-| P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ⬜ partly (engine done) |
+| P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ✅ built (not committed; commits and tests by autocode) |
 | — | **cut line: below here is optional if behind** | | | |
 | P8 | Threshold + first plantings + "a season passes" | should | 1h | ⬜ |
 | P9 | Reveal: "what holds you" | should | 1h | ⬜ |
@@ -112,11 +112,11 @@ gantt
 
 *Look ref:* screens p11 (return), p16 (neglected), dissolve storyboard p18.
 
-- [ ] **P7.1 Return replay (45m).** On `arrive()`, render `states.before`, then ease each flower to `states.after` over 3s, staggered, while fog density rises. The whisper line comes from the summary. About-to-be-lost ghosts glow once (a 1.5s halo pulse) to invite a tend.
-- [ ] **P7.2 The dissolve (45m).** `src/scene/fx/Dissolve.tsx`: the 6 beats from scene-spec. It ends in a **dark seed** (small dark ellipse + faint ring) that stays clickable and opens focus with `return`.
-- [ ] **P7.3 Slider polish (15m).** The hidden slider (<kbd>`</kbd>) previews smoothly; "arrive" plays the replay. Add a "reset demo garden" button in the slider panel.
-- [ ] **P7.4 Neglected-garden check (15m).** Slide +28 days → the garden should look like screen p16: mostly outlines and fog, with a few connected memories still glowing.
-- **Gate:** the demo story works: open → hover → tend Leo → slide 2 weeks → arrive → the rooftop dissolves → return it.
+- [x] **P7.1 Return replay (45m).** On `arrive()`, render `states.before`, then ease each flower to `states.after` over 3s, staggered, while fog density rises. The whisper line comes from the summary. About-to-be-lost ghosts glow once (a 1.5s halo pulse) to invite a tend.
+- [x] **P7.2 The dissolve (45m).** `src/scene/fx/Dissolve.tsx`: the 6 beats from scene-spec. It ends in a **dark seed** (small dark ellipse + faint ring) that stays clickable and opens focus with `return`.
+- [x] **P7.3 Slider polish (15m).** The hidden slider (<kbd>`</kbd>) previews smoothly; "arrive" plays the replay. Add a "reset demo garden" button in the slider panel.
+- [x] **P7.4 Neglected-garden check (15m).** Slide +28 days → the garden should look like screen p16: mostly outlines and fog, with a few connected memories still glowing.
+- **Gate:** the demo story works: open → hover → tend Leo → slide 2 weeks → arrive → the rooftop dissolves → return it. *Checked in screenshots* (look log 20261012-2000-*): after 21 days the Dad pair, the rooftop and Satie dissolve to seeds and particles and their threads go out; letting go of one memory dissolves it and its thread; +28 days previews a garden like p16. Sandbox: `?sandbox=dissolve`. Not committed and no tests written for P7, as asked: autocode handles both.
 
 ---
 
