@@ -23,13 +23,13 @@ How each design-system rule becomes a Three.js parameter. The look reference is 
 
 | part | geometry | material |
 |---|---|---|
-| stem | `TubeGeometry` along a CatmullRom curve of the stem points, radius 0.008–0.012 | unlit, `stemColor` = 45% flower colour, 55% fog |
-| petal fill | `ShapeGeometry` from the petal path, cupped by bending vertices in z (`z = k·r²`, k = 0.15) | custom shader: colour × (0.62 vivid / 0.34 fading) opacity, brighter toward the tip, `toneMapped: false` |
+| stem | 1px `LineSegments` along the sampled stem curve (as built; the 1px SVG stroke read better than a tube) | `stemColor` = 45% flower colour, 55% fog (oklab) |
+| petal fill | triangulated petal outline, cupped toward the viewer around the head (`z = 0.35·r²`, tuned in the sandbox) | custom shader: colour × (0.62 vivid / 0.34 fading) opacity, `toneMapped: false` |
 | petal outline | `Line2` (drei `<Line>`) on the same path, width 1px | colour, opacity 0.85 (ghost: `ghost` 0.4, no fill) |
 | leaves | same as petals at 0.2 width ratio | `stemColor`, fill 0.35 |
-| centre | small sphere r = 0.025 | `light` #ffd9a0 × 3 intensity (feeds bloom) |
+| centre | small light-coloured disc (r 2.6px, part of the fill mesh) | `light` #ffd9a0 × (1 + 1.0·glow), feeds the bloom pass |
 | place florets | `InstancedMesh` of 5-petal ellipses, 22–34 per flower | per-instance colour |
-| halo | camera-facing quad, radial gradient, additive | colour × 0.5 vivid / 0.2 fading; breathes scale 1 → 1.06 over 7s |
+| halo | camera-facing quad, radial gradient, additive blending | colour × 0.5 vivid / 0.2 fading; breathes scale 1 → 1.06 over 7s |
 
 **Facing.** Each flower's group turns around Y to face the camera (`group.rotation.y = atan2(cam.x − x, cam.z − z)`), and petals keep a slight z-depth so parallax still reads as 3D.
 
@@ -46,9 +46,9 @@ How each design-system rule becomes a Three.js parameter. The look reference is 
 | `uColor` | kind colour | 50% toward fog (oklab) | 30% | fog |
 | `uFill` | 0.62 | 0.34 | 0 | 0 |
 | `uLine` | 0.85 | 0.85 | 0.4 | 0.12 |
-| `uGlow` (bloom drive) | 1.6 | 0.8 | 0 | 0 |
-| `uDroop` (head tilt rad) | 0 | 0.08 | 0.18 | — |
-| sway amplitude | 0.03 | 0.03 | 0.02 | 0 |
+| `uGlow` (bloom drive) | 1.0 | 0.45 | 0 | 0 |
+| droop (stem lean, share of height) | 0 | 0.03 | 0.07 | 0.05 |
+| sway amplitude (share of height) | 0.012 | 0.012 | 0.008 | 0 |
 
 Use `flowerColor(kind, state, hue)` from `src/engine/color.ts`. It is tested to match the `*-fading` tokens exactly.
 
