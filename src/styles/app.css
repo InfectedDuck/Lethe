@@ -56,7 +56,35 @@ html, body, #root { height: 100%; overflow: hidden; }
 .photo-pick { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
 .photo-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-hair); }
 
+/* The threshold (screen p7): the whole screen is the way in. */
+.threshold { position: absolute; inset: 0; z-index: 10; background: radial-gradient(ellipse 60% 45% at 50% 46%, #11151d 0%, var(--night) 70%);
+  transition: opacity 1.2s ease; }
+.threshold.is-leaving { opacity: 0; pointer-events: none; }
+.threshold-enter { appearance: none; border: 0; background: none; cursor: pointer; position: absolute; inset: 0; width: 100%;
+  display: grid; place-content: center; justify-items: center; gap: var(--space-3); color: var(--text-primary); padding: 0 var(--space-4); }
+.threshold-enter:focus-visible { outline: none; }
+.threshold-enter:focus-visible .threshold-hint { color: var(--text-primary); }
+.threshold-seed { width: 16px; height: 30px; border-radius: 50%; background: var(--light); margin-bottom: var(--space-5);
+  box-shadow: 0 0 40px 22px rgba(255, 217, 160, 0.16), 0 0 90px 60px rgba(255, 217, 160, 0.06); animation: breathe 7s ease-in-out infinite; }
+@keyframes breathe { 50% { box-shadow: 0 0 46px 26px rgba(255, 217, 160, 0.2), 0 0 100px 66px rgba(255, 217, 160, 0.07); } }
+.threshold-line { text-align: center; text-shadow: var(--glow-text); }
+.threshold-hint { color: var(--fog); transition: color .4s ease; }
+.threshold-demo { position: absolute; left: 50%; bottom: var(--space-5); transform: translateX(-50%); }
+
+/* First plantings (screens p8–p10): one card at a time, high on the screen, flowers growing below. */
+.prompt-card { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(540px, calc(100vw - 48px)); z-index: 5; }
+.prompt-title { margin: 0 0 var(--space-3); font-family: var(--font-display); font-weight: 400; font-size: 32px; line-height: 40px; color: var(--text-primary); }
+.prompt-input { display: block; width: 100%; box-sizing: border-box; resize: none; overflow: hidden; background: none; border: 0; outline: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--fog) 60%, transparent); color: var(--text-primary); padding: var(--space-1) 0 var(--space-2);
+  font-family: var(--font-display); font-size: 24px; line-height: 32px; }
+.prompt-input::placeholder { color: var(--fog); font-style: italic; }
+.prompt-input:focus-visible { border-bottom-color: var(--text-primary); }
+.prompt-footer { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.prompt-dots { display: inline-flex; gap: var(--space-2); margin-right: auto; }
+.prompt-dots .lt-light-dot.is-here { opacity: 1; border-color: var(--text-primary); }
+
 @media (prefers-reduced-motion: reduce) {
+  .threshold-seed { animation: none; }
   .surface { animation: none; }
   .light-counter .lt-light-dot { transition: none; }
 }

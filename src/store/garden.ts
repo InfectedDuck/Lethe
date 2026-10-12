@@ -1,5 +1,5 @@
 // The one store shared by the 3D scene and the DOM interface.
-// It owns the Garden (persisted later via Dexie, see docs/build-plan.md P10), where planted flowers stand, the
+// It owns the Garden (your own one is kept in this browser, see persist.ts), where planted flowers stand, the
 // clock, and the planting draft. Every action clones the garden, runs an engine function, and replaces it, so React
 // and R3F see a new reference.
 
@@ -14,6 +14,7 @@ import { FIRST_PROMPTS, sampleGarden } from '../data/sample';
 import { offlineTag } from '../tagging/offline';
 import { apiTag, type TagSource } from '../tagging/tag';
 import { dominantColor } from '../ui/photo';
+import { keep, load, markKept } from './persist';
 
 type Clock = { debugOffset: number };
 type DraftTags = { people: Tags; places: Tags; feelings: Tags };
@@ -22,7 +23,7 @@ type DraftTags = { people: Tags; places: Tags; feelings: Tags };
 export type Draft = {
   kind: Kind;
   text: string;
-  /** Photo memories: the chosen image (kept in memory until P10 stores it) and its colour. */
+  /** Photo memories: the chosen image (written with the garden once planted) and its colour. */
   photoId?: string;
   hue?: string;
   tags: DraftTags | null;
@@ -60,6 +61,8 @@ type GardenStore = {
   events: { type: 'bloom' | 'tend' | 'ripple' | 'dissolve' | 'beckon'; id: string; at: number }[];
   planting: PlantingStep;
   phase: Phase;
+  /** Whose garden is on screen: your own (kept in this browser) or the demo garden (never kept). */
+  owner: 'own' | 'demo';
   /** Which first-planting prompt is showing (index into FIRST_PROMPTS). */
   promptIndex: number;
   /** A line the garden says over everything else for a moment ("A season passes."). */
@@ -80,6 +83,8 @@ type GardenStore = {
   arrive: () => void;
   /** Hidden slider: put the ten sample memories back as they were. */
   resetDemo: () => void;
+  /** Threshold: return to your kept garden if this browser has one, otherwise begin it with the first plantings. */
+  enterOwn: () => Promise<void>;
   /** Threshold: begin your own garden, empty, with the first plantings. */
   beginOwn: () => void;
   /** Threshold: see the demo garden (the ten sample memories). */
@@ -125,6 +130,9 @@ const REPLAY_STAGGER_MS = 260;
 const REPLAY_TICK_MS = 120;
 const DISSOLVE_AFTER_MS = 1500;
 const BECKON_AFTER_MS = 3000;
+/** The kept garden, read once at start while the threshold shows (preview and demo links never read it). */
+const kept = startPhase === 'threshold' ? load() : Promise.resolve(null);
+
 let replayTimer: ReturnType<typeof setInterval> | null = null;
 const stopReplay = () => { if (replayTimer) clearInterval(replayTimer); replayTimer = null; };
 
@@ -187,6 +195,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     events: [],
     planting: 'closed',
     phase: startPhase,
+    owner: 'demo',
     promptIndex: 0,
     whisperOverride: null,
     draft: null,
@@ -276,13 +285,31 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        whisperOverride: null,
+        whisperOverride: null, owner: 'demo',
       });
     },
 
     /* ---------- the threshold and the first plantings (P8) ---------- */
 
     seeDemo: () => { get().resetDemo(); set({ phase: 'garden' }); },
+
+    // Coming back: the garden as it was left, then the time away, played as the return replay (P7.1).
+    enterOwn: async () => {
+      const found = await kept;
+      if (!found) { get().beginOwn(); return; }
+      const { stored, photos } = found;
+      markKept(Object.keys(photos));
+      const views = viewAll(stored.garden, stored.garden.lastSeenAt);
+      set({
+        garden: stored.garden, views, shown: views, replaying: false, positions: stored.layout,
+        photos: Object.fromEntries(Object.entries(photos).map(([id, blob]) => [id, { blob, url: URL.createObjectURL(blob) }])),
+        events: [], tagSources: {}, clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null,
+        planting: 'closed', draft: null, whisperOverride: null,
+        owner: 'own', promptIndex: stored.promptIndex,
+        phase: stored.promptIndex < FIRST_PROMPTS.length ? 'first' : 'garden',
+      });
+      get().arrive();
+    },
 
     beginOwn: () => {
       stopReplay();
@@ -292,7 +319,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, photos: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        phase: 'first', promptIndex: 0, whisperOverride: null,
+        phase: 'first', promptIndex: 0, whisperOverride: null, owner: 'own',
       });
     },
 
@@ -368,3 +395,26 @@ export const useGarden = create<GardenStore>((set, get) => {
     },
   };
 });
+
+/**
+ * Keep your own garden: write it 500ms after the last change to it, where its flowers stand, or the first plantings,
+ * and once more when the page is hidden or closed. The demo garden is never written.
+ */
+const KEEP_AFTER_MS = 500;
+let keepTimer: ReturnType<typeof setTimeout> | null = null;
+const keepNow = () => {
+  if (keepTimer) clearTimeout(keepTimer);
+  keepTimer = null;
+  const { owner, garden, positions, promptIndex, photos } = useGarden.getState();
+  if (owner === 'own') void keep({ garden, layout: positions, promptIndex }, photos, realNow());
+};
+useGarden.subscribe((s, prev) => {
+  if (s.owner !== 'own') return;
+  if (s.garden === prev.garden && s.positions === prev.positions && s.promptIndex === prev.promptIndex && s.owner === prev.owner) return;
+  if (keepTimer) clearTimeout(keepTimer);
+  keepTimer = setTimeout(keepNow, KEEP_AFTER_MS);
+});
+if (typeof addEventListener !== 'undefined') {
+  addEventListener('pagehide', () => { if (keepTimer) keepNow(); });
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && keepTimer) keepNow(); });
+}
