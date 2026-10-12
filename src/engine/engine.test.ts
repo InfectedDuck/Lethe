@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { sampleGarden } from '../data/sample';
 import {
-  C, advance, drawThread, emptyGarden, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, retag, threadBrightness,
-  retention, returnTo, setVitality, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf,
+  C, advance, canPlant, canReturn, canTend, drawThread, effectiveStability, emptyGarden, firstWords, flowerColor, gardenDaysForRealDays, grantLight, holders, letGo, plant, rejectThread, retag, suggestThreads, threadBrightness,
+  retention, returnTo, setVitality, stateOf, tend, threadKey, viewAll, viewOf, vitalityOf, visit,
 } from './index';
 
 const REAL = 1_700_000_000_000;
@@ -202,5 +202,166 @@ describe('time and reveal', () => {
     expect(flowerColor('sentence', 'fading')).toBe('#bdb49c');
     expect(flowerColor('song', 'fading')).toBe('#a19bcb');
     expect(flowerColor('place', 'fading')).toBe('#87b4b4');
+  });
+});
+
+describe('guards', () => {
+  it('cannot tend lost or missing memories, and spends nothing', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    letGo(g, 'a', 0);
+    const light = g.light;
+    expect(tend(g, 'a', 0)).toEqual([]);
+    expect(tend(g, 'nope', 0)).toEqual([]);
+    expect(g.light).toBe(light);
+    expect(canTend(g, 'a')).toBe(false);
+    expect(canTend(g, 'nope')).toBe(false);
+  });
+  it('return leaves living and missing memories untouched', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    const light = g.light;
+    returnTo(g, 'a', 0);
+    returnTo(g, 'nope', 0);
+    expect(g.light).toBe(light);
+    expect(g.memories.a.lost).toBe(false);
+    expect(canReturn(g, 'a')).toBe(false);
+    expect(canReturn(g, 'nope')).toBe(false);
+  });
+  it('returning at 0 light leaves the memory lost', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    letGo(g, 'a', 0);
+    g.light = 0;
+    returnTo(g, 'a', 0);
+    expect(g.memories.a.lost).toBe(true);
+    expect(g.light).toBe(0);
+  });
+  it('letting go twice keeps the first lostAt', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    letGo(g, 'a', 10);
+    letGo(g, 'a', 20);
+    expect(g.memories.a.lostAt).toBe(10);
+  });
+});
+
+describe('planting budget', () => {
+  it('the first seven plantings are free, then three per real day', () => {
+    const g = emptyGarden(REAL);
+    for (let i = 0; i < 7; i++) {
+      expect(canPlant(g, REAL + i * DAY)).toBe(true);
+      plant(g, { id: `p${i}`, kind: 'sentence', text: `memory ${i}` }, i, REAL + i * DAY);
+    }
+    expect(g.firstPlantingsDone).toBe(true);
+    plant(g, { id: 'p7', kind: 'sentence', text: 'eighth' }, 7, REAL + 6 * DAY);
+    plant(g, { id: 'p8', kind: 'sentence', text: 'ninth' }, 7, REAL + 6 * DAY);
+    plant(g, { id: 'p9', kind: 'sentence', text: 'tenth' }, 7, REAL + 6 * DAY);
+    expect(canPlant(g, REAL + 6 * DAY)).toBe(false);
+    expect(canPlant(g, REAL + 7 * DAY)).toBe(true);
+  });
+});
+
+describe('thread bonus cap', () => {
+  it('follows CAP*(1-e^(-bonus/CAP)) for one thread', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'Leo' }] }, 0, REAL);
+    expect(effectiveStability(g, g.memories.a) - C.S_INITIAL)
+      .toBeCloseTo(C.THREAD_BONUS_CAP * (1 - Math.exp(-(C.THREAD_STABILITY_BONUS * 0.85) / C.THREAD_BONUS_CAP)), 5);
+  });
+  it('a hub saturates below S+8 and never goes immortal', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'hub', kind: 'sentence', text: 'hub', people: [{ name: 'Leo' }] }, 0, REAL);
+    for (let i = 0; i < 12; i++) {
+      plant(g, { id: `s${i}`, kind: 'sentence', text: `spoke ${i}`, people: [{ name: 'Leo' }] }, 0, REAL);
+    }
+    const s = effectiveStability(g, g.memories.hub);
+    expect(s).toBeLessThan(C.S_INITIAL + C.THREAD_BONUS_CAP);
+    expect(s).toBeGreaterThan(C.S_INITIAL + C.THREAD_BONUS_CAP - 0.1);
+  });
+  it('threads to lost neighbours stop holding anything', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'Leo' }] }, 0, REAL);
+    const held = effectiveStability(g, g.memories.a);
+    expect(held).toBeGreaterThan(C.S_INITIAL);
+    letGo(g, 'b', 0);
+    expect(effectiveStability(g, g.memories.a)).toBe(C.S_INITIAL);
+  });
+});
+
+describe('tend spill', () => {
+  it('restores exactly share x weight of what the neighbour lost', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'Leo' }] }, 0, REAL);
+    setVitality(g, 'b', 0.4, 0);
+    tend(g, 'a', 0);
+    expect(vitalityOf(g, g.memories.b, 0))
+      .toBeCloseTo(0.4 + C.TEND_NEIGHBOUR_SHARE * C.THREAD_WEIGHT[1] * 0.6, 5);
+  });
+  it('skips lost neighbours in the ripple', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'c', kind: 'sentence', text: 'z', people: [{ name: 'Leo' }] }, 0, REAL);
+    letGo(g, 'c', 0);
+    expect([...tend(g, 'a', 0)].sort()).toEqual(['b']);
+  });
+});
+
+describe('rejected, drawn and suggested threads', () => {
+  it('a rejected thread is removed and never suggested again', () => {
+    const g = sampleGarden(100, REAL);
+    expect(g.threads.some((t) => threadKey(t.a, t.b) === 'm1|m2')).toBe(true);
+    rejectThread(g, 'm1', 'm2');
+    expect(g.threads.some((t) => threadKey(t.a, t.b) === 'm1|m2')).toBe(false);
+    expect(suggestThreads(g, g.memories.m1).some((t) => threadKey(t.a, t.b) === 'm1|m2')).toBe(false);
+  });
+  it('a drawn thread is level-1 manual, clears rejection, survives rebuilds', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y' }, 0, REAL);
+    rejectThread(g, 'a', 'b');
+    drawThread(g, 'a', 'b');
+    expect(g.rejected).not.toContain(threadKey('a', 'b'));
+    const t = g.threads.find((x) => threadKey(x.a, x.b) === threadKey('a', 'b'))!;
+    expect(t.level).toBe(1);
+    expect(t.source).toBe('manual');
+    plant(g, { id: 'c', kind: 'sentence', text: 'z' }, 0, REAL);
+    expect(g.threads.some((x) => threadKey(x.a, x.b) === threadKey('a', 'b'))).toBe(true);
+  });
+  it('suggestions skip the memory itself and lost memories', () => {
+    const g = emptyGarden(REAL);
+    plant(g, { id: 'a', kind: 'sentence', text: 'x', people: [{ name: 'Leo' }] }, 0, REAL);
+    plant(g, { id: 'b', kind: 'sentence', text: 'y', people: [{ name: 'Leo' }] }, 0, REAL);
+    expect(suggestThreads(g, g.memories.a).map((t) => threadKey(t.a, t.b))).toEqual([threadKey('a', 'b')]);
+    letGo(g, 'b', 0);
+    expect(suggestThreads(g, g.memories.a)).toEqual([]);
+  });
+  it('brightness caps at 1 and is 0 when both ends are spent', () => {
+    expect(threadBrightness({ a: 'x', b: 'y', level: 3 as const, source: 'manual' }, 1, 1)).toBe(1);
+    expect(threadBrightness({ a: 'x', b: 'y', level: 1 as const, source: 'auto' }, 0, 0.9)).toBe(0);
+  });
+});
+
+describe('visit and words', () => {
+  it('visit grants light, applies elapsed days and remembers the visit', () => {
+    const g = emptyGarden(REAL);
+    g.light = 1;
+    plant(g, { id: 'a', kind: 'sentence', text: 'x' }, 0, REAL);
+    const s = visit(g, 7, REAL + DAY);
+    expect(g.light).toBe(4);
+    expect(g.lastSeenAt).toBe(7);
+    expect(s.gardenDaysPassed).toBe(7);
+    expect(s.realDaysPassed).toBeCloseTo(1);
+  });
+  it('stateOf with lost=true is lost at any vitality', () => {
+    expect(stateOf(0.9, true)).toBe('lost');
+  });
+  it('firstWords cuts at commas and never dangles', () => {
+    expect(firstWords('Tea with Mei, on her balcony in Hangzhou', 3)).toBe('Tea with Mei');
+    expect(firstWords('A walk with the', 4)).toBe('A walk');
   });
 });
