@@ -1,5 +1,6 @@
 // Vercel serverless function: POST /api/tag. Set ANTHROPIC_API_KEY in the Vercel project settings.
-import { handleTag } from '../server/tag';
+// Explicit .js: Vercel runs this file as a native Node ES module, which needs extensions.
+import { handleTag } from '../server/tag.js';
 
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
