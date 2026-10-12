@@ -15,8 +15,12 @@ import { useLayout } from '../useLayout';
 
 export const HOME_POS = new THREE.Vector3(0, 3.4, 11.5);
 export const HOME_TARGET = new THREE.Vector3(0, 1.1, 0);
-/** Offset from a focused flower's head: to its right and in front, so its words fit on the right half. */
-const FOCUS_OFFSET = new THREE.Vector3(1.2, 0.4, 4.2);
+/**
+ * Focus framing (screen p2): look a little to the right of the flower's head, from in front of it, so the
+ * flower stands at about a third of the width and its words fit on the right half.
+ */
+const FOCUS_LOOK_SHIFT = new THREE.Vector3(1.0, 0, 0);
+const FOCUS_OFFSET = new THREE.Vector3(0, 0.35, 4.4);
 
 const DEG = Math.PI / 180;
 const NEAR = { dist: 11.5, maxPolar: 83 * DEG };
@@ -57,7 +61,7 @@ export function CameraRig() {
     const L = focusedId ? layout[focusedId] : null;
     let wantPos: THREE.Vector3, wantTarget: THREE.Vector3;
     if (m && L && !focus.current.overridden) {
-      wantTarget = flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y));
+      wantTarget = flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y)).add(FOCUS_LOOK_SHIFT);
       wantPos = wantTarget.clone().add(FOCUS_OFFSET);
     } else if (m && L) {
       return; // the person moved the camera while focused: leave it where they put it
