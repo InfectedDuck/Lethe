@@ -1,0 +1,19 @@
+/* App layout only. Colours, type and components come from the design system. */
+html, body, #root { height: 100%; overflow: hidden; }
+.stage { position: fixed; inset: 0; background: var(--night); }
+.stage canvas { display: block; }
+
+/* Edge interface: space-4 from the edges, rests at ui-idle, wakes on hover or focus. */
+.edge { position: absolute; opacity: var(--ui-idle); transition: opacity .4s ease; }
+.edge:hover, .edge:focus-within { opacity: 1; }
+.top-left { top: var(--space-4); left: var(--space-4); }
+.top-right { top: var(--space-4); right: var(--space-4); }
+.bottom-left { bottom: var(--space-4); left: var(--space-4); }
+.bottom-center { bottom: var(--space-4); left: 50%; transform: translateX(-50%); opacity: 1; max-width: 640px; }
+
+.hover-recollection { position: absolute; top: 18%; left: 38%; pointer-events: none; }
+.focus-recollection { position: absolute; top: 50%; right: 8%; transform: translateY(-50%); }
+
+.time-slider { position: absolute; top: 64px; right: var(--space-4); display: grid; gap: var(--space-2); padding: var(--space-3);
+  background: var(--overlay-fill); backdrop-filter: blur(16px); border: 1px solid var(--overlay-border); border-radius: var(--radius-overlay); }
+.time-slider input { width: 240px; display: block; margin-top: var(--space-2); }
