@@ -21,8 +21,8 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | — | **cut line: below here is optional if behind** | | | |
 | P8 | Threshold + first plantings + "a season passes" | should | 1h | ✅ built (handoff to Spark) |
 | P9 | Reveal: "what holds you" | should | 1h | ✅ built (handoff to Spark) |
-| P10 | Persistence (Dexie) + settings (export, let the garden go) | should | 1h | ✅ built (handoff to Spark) |
-| P11 | Sound (Tone.js) | could | 1h | ✅ built (mix by measurement, needs a listen) |
+| P10 | Persistence (Dexie) + settings (export, let the garden go) | should | 1h | ⬜ |
+| P11 | Sound (Tone.js) | could | 1h | ⬜ |
 | P12 | Ship: perf, deploy, demo script, look log | must | 1.5h | ⬜ (deploy early in P2) |
 
 ```mermaid
@@ -159,7 +159,13 @@ gantt
 
 ## P12 · Ship (1.5h, must)
 
-- [ ] **P12.1 Perf (30m).** Seed 200 flowers (`?stress=200`) → 60fps on a laptop? If not: merge geometries, cut halo quads for faraway flowers, use low quality.
+- [ ] **P12.1 Perf (30m).** The wall is fill-rate, not scene complexity. Work the fixes in order; stop when the gate passes.
+  - *Budget (counted 13 Oct):* the demo garden is 10 flowers, 8 threads, 5 vivid / 4 fading / 1 ghost. Steady state ≈ 78 scene draws (flowers 10×4, threads 8×3, fog 8 thin + 5 memory, ground 1) plus ~10 composer passes and ~35 small `useFrame`s. That holds 60fps on any real GPU at DPR ≤ 1.75. `?stress=200` grows 2,562 threads (D19, budget draws 160). So if the demo lags, triage first — it is the machine or the pixels, not the scene.
+  - *Triage (no code):* (1) `chrome://gpu`: software GL (SwiftShader, HW accel off, RDP/VM) lags whatever the code does. (2) Production build (`npm run build` + `vite preview`): dev + `StrictMode` double-renders. (3) `?quality=low`: if it fixes it, fill-rate — fog fbm + bloom + grain at high DPR. (4) Hitches only on hover/click/arrive: main-thread work during replay ticks. (5) `?stress=200` left on, battery saver, a 4K screen at DPR 2+.
+  - [ ] **P12.1a DPR policy (10m).** Start at DPR 1 and step up after sustained 60fps, instead of starting at 1.75 and latching down after 3 flip-flops (`src/scene/Effects.tsx`). Keep the scene-spec § Post ceiling; if it moves, update the spec and `docs/decisions.md` first. *Done when:* a weak iGPU opens at DPR 1 with no visible dip.
+  - [ ] **P12.1b Fog cost (15m).** The thin banks run 5-octave fbm per pixel with ~3× overdraw (`src/scene/fog/FogBanks.tsx`, `src/scene/shaders/noise.ts`). Give thin banks a 3-octave path (memory banks keep 5), and try 8 → 5 thin banks against the p3 look-log frame. *Done when:* the p3 screenshot still matches and `?quality=low` is no longer needed on the test laptop.
+  - [ ] **P12.1c Caches + gate (5m).** Re-renders are cheap only because `generateFlower` is string-key cached (`src/scene/flower/generator.ts:111-117`) and `flowerGeometry` hits on identity (`src/scene/flower/geometry.ts:27-33`): never build geometry in render, never break the cache keys, and dispose geometries on unmount (materials dispose today, geometries don't). Pin the identity with a test. Then `?stress=200` → 60fps on a laptop. *Done when:* the gate passes and the test is green.
+  - *Do not:* merge flower geometries (seeds differ; the caches already make rebuilds free), `frameloop="demand"` (the garden always breathes), or chase draw calls at demo scale.
 - [ ] **P12.2 Demo script (20m).** Write the 90-second judge path in README (below) and rehearse it twice.
 - [ ] **P12.3 Final deploy + check (20m).** Check production: tagging works, the no-key fallback works, there are no console errors, and fonts load.
 - [ ] **P12.4 Look log + README screenshots (20m).**
