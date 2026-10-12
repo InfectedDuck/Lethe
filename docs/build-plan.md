@@ -16,7 +16,7 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 | P3 | **Flowers**: procedural Bloom in 3D, 4 kinds × 4 states | must | 3.5h | ✅ done (ghost petals falling → P7) |
 | P4 | Threads: arcs, pulse, motes, hover | must | 1h | ✅ done |
 | P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ✅ done |
-| P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ⬜ partly |
+| P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ✅ done |
 | P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ⬜ partly (engine done) |
 | — | **cut line: below here is optional if behind** | | | |
 | P8 | Threshold + first plantings + "a season passes" | should | 1h | ⬜ |
@@ -102,11 +102,11 @@ gantt
 
 *Look ref:* screens p4, p5, p6, and the bloom storyboard p17.
 
-- [ ] **P6.1 Plant overlay (40m).** `+ plant` (bottom centre, as in the screens) or <kbd>N</kbd> → Overlay "What kind of memory?" with four seed dots (screen p4) → the field (p5). Photo: a file input; extract the dominant colour with a 32×32 canvas average, ignoring near-black and near-white; store the blob in P10.
-- [ ] **P6.2 Live tagging + suggested threads (40m).** Debounce 600ms while typing → offline tags at once, then `apiTag()` (it already backs off after 503/429) → show "threads it could join" chips with × to reject (p6) → dashed suggested threads in the scene from a ghost seed hovering where the flower will grow. Abort stale requests.
-- [ ] **P6.3 The bloom (50m).** `src/scene/fx/BloomGrowth.tsx`: the 6 beats from scene-spec § The bloom, driven by the `bloom` event. Sandbox at `?sandbox=bloom` with a replay button.
-- [ ] **P6.4 The first thread (20m).** If the new memory's first thread forms, run the light pulse from it to the neighbour before the thread fades in. Sound hook (P11).
-- **Gate:** plant "Osmanthus tea with Grandma Mei on her balcony in Hangzhou." It should grow, thread to m1 and m2, and the Mei cluster should brighten. Works with no API key too (local tags).
+- [x] **P6.1 Plant overlay (40m).** `+ plant` (bottom centre, as in the screens) or <kbd>N</kbd> → Overlay "What kind of memory?" with four seed dots (screen p4) → the field (p5). Photo: a file input; extract the dominant colour with a 32×32 canvas average, ignoring near-black and near-white; store the blob in P10.
+- [x] **P6.2 Live tagging + suggested threads (40m).** Debounce 600ms while typing → offline tags at once, then `apiTag()` (it already backs off after 503/429) → show "threads it could join" chips with × to reject (p6) → dashed suggested threads in the scene from a ghost seed hovering where the flower will grow. Abort stale requests.
+- [x] **P6.3 The bloom (50m).** `src/scene/fx/BloomGrowth.tsx`: the 6 beats from scene-spec § The bloom, driven by the `bloom` event. Sandbox at `?sandbox=bloom` with a replay button.
+- [x] **P6.4 The first thread (20m).** If the new memory's first thread forms, run the light pulse from it to the neighbour before the thread fades in. Sound hook (P11).
+- **Gate:** plant "Osmanthus tea with Grandma Mei on her balcony in Hangzhou." It should grow, thread to m1 and m2, and the Mei cluster should brighten. Works with no API key too (local tags). *Passed with offline tags:* it threads to m1 (level 2), m2 (level 2) and m3 (level 1), and m1's vitality rises 0.900 → 0.908. Found on the way: the demo garden had used up today's planting budget, so planting had silently done nothing since P0 (fixed, with a test). Positions of planted memories live in the store (`positions`) until P10 persists them. "+ plant" sits bottom-left ([D17](decisions.md)). Sandbox: `?sandbox=bloom` (storyboard frames plus live replay).
 
 ## P7 · Time, return, dissolve (2h, must)
 
