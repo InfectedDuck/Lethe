@@ -86,6 +86,13 @@ html, body, #root { height: 100%; overflow: hidden; }
 /* Top-left: the name, and the quiet way into the reveal. */
 .top-left-row { display: flex; align-items: center; gap: var(--space-3); }
 
+/* Settings (screen p13): one overlay under the name, the privacy note, then the two choices as words. */
+.settings-entry { padding: 0; }
+.settings-overlay { position: absolute; left: var(--space-4); top: 64px; width: min(440px, calc(100vw - 48px)); z-index: 5; }
+.settings-overlay .lt-overlay-actions { justify-content: flex-end; }
+.settings-note { margin: 0; color: var(--text-primary); max-width: 38ch; }
+.settings-choices { display: grid; justify-items: start; gap: var(--space-2); margin-top: var(--space-4); }
+
 /* The reveal (screen p12): a column of light on the left, no panel behind it; the garden glows to its right. */
 .reveal { position: absolute; left: 64px; top: 16%; bottom: var(--space-4); width: min(330px, 34vw); display: flex; flex-direction: column; z-index: 4; }
 .reveal-title { margin: 0 0 var(--space-4); color: var(--text-primary); }

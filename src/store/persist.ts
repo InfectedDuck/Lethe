@@ -74,3 +74,34 @@ export async function keep(
 
 /** Mark photos that came back from the store as already written. */
 export const markKept = (ids: string[]) => ids.forEach((id) => kept.add(id));
+
+/** Let the garden go (P10.2): every memory and photo leaves this browser. */
+export async function forget(): Promise<void> {
+  kept.clear();
+  if (!db) return;
+  await db.transaction('rw', db.garden, db.photos, async () => {
+    await db.garden.clear();
+    await db.photos.clear();
+  });
+}
+
+/**
+ * Export my garden (P10.2): the garden on screen as one JSON file, photos inside it as base64 data URLs, so the file
+ * alone is the whole garden. Nothing is sent anywhere: the browser hands the file to the person.
+ */
+export async function exportFile(
+  garden: Garden, layout: Record<string, Place>, photos: Record<string, { blob: Blob }>, realNow: number,
+): Promise<{ name: string; blob: Blob }> {
+  const asDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+  const ids = Object.values(garden.memories).flatMap((m) => (m.photoId && photos[m.photoId] ? [m.photoId] : []));
+  const encoded = Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await asDataUrl(photos[id].blob)] as const)));
+  const d = new Date(realNow);
+  const day = [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+  const body = { lethe: VERSION, exportedAt: new Date(realNow).toISOString(), garden, layout, photos: encoded };
+  return { name: `lethe-garden-${day}.json`, blob: new Blob([JSON.stringify(body, null, 2)], { type: 'application/json' }) };
+}

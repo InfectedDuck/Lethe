@@ -14,7 +14,7 @@ import { FIRST_PROMPTS, sampleGarden } from '../data/sample';
 import { offlineTag } from '../tagging/offline';
 import { apiTag, type TagSource } from '../tagging/tag';
 import { dominantColor } from '../ui/photo';
-import { keep, load, markKept } from './persist';
+import { forget, keep, load, markKept } from './persist';
 
 type Clock = { debugOffset: number };
 type DraftTags = { people: Tags; places: Tags; feelings: Tags };
@@ -69,6 +69,8 @@ type GardenStore = {
   whisperOverride: string | null;
   /** "What holds your garden" (P9, screen p12): open, and which person or place is lit. */
   reveal: { open: boolean; entityId: string | null };
+  /** The settings overlay (P10.2), opened from "lethe" top-left. */
+  settings: boolean;
   draft: Draft | null;
 
   now: () => number;
@@ -98,6 +100,10 @@ type GardenStore = {
   openReveal: () => void;
   selectHolder: (entityId: string) => void;
   closeReveal: () => void;
+  /** Settings: open or close it; let the garden go empties this browser and returns to the threshold. */
+  openSettings: () => void;
+  closeSettings: () => void;
+  letGardenGo: () => Promise<void>;
 
   openPlanting: (step?: Exclude<PlantingStep, 'closed'>, kind?: Kind) => void;
   closePlanting: () => void;
@@ -137,7 +143,7 @@ const REPLAY_TICK_MS = 120;
 const DISSOLVE_AFTER_MS = 1500;
 const BECKON_AFTER_MS = 3000;
 /** The kept garden, read once at start while the threshold shows (preview and demo links never read it). */
-const kept = startPhase === 'threshold' ? load() : Promise.resolve(null);
+let kept = startPhase === 'threshold' ? load() : Promise.resolve(null);
 
 let replayTimer: ReturnType<typeof setInterval> | null = null;
 const stopReplay = () => { if (replayTimer) clearInterval(replayTimer); replayTimer = null; };
@@ -205,6 +211,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     promptIndex: 0,
     whisperOverride: null,
     reveal: { open: false, entityId: null },
+    settings: false,
     draft: null,
 
     now: () => {
@@ -292,7 +299,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'demo',
+        whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'demo', settings: false,
       });
     },
 
@@ -311,7 +318,7 @@ export const useGarden = create<GardenStore>((set, get) => {
         garden: stored.garden, views, shown: views, replaying: false, positions: stored.layout,
         photos: Object.fromEntries(Object.entries(photos).map(([id, blob]) => [id, { blob, url: URL.createObjectURL(blob) }])),
         events: [], tagSources: {}, clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null,
-        planting: 'closed', draft: null, whisperOverride: null, reveal: { open: false, entityId: null },
+        planting: 'closed', draft: null, whisperOverride: null, reveal: { open: false, entityId: null }, settings: false,
         owner: 'own', promptIndex: stored.promptIndex,
         phase: stored.promptIndex < FIRST_PROMPTS.length ? 'first' : 'garden',
       });
@@ -326,7 +333,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({
         garden: g, views, shown: views, replaying: false, positions: {}, photos: {}, events: [], tagSources: {},
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
-        phase: 'first', promptIndex: 0, whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'own',
+        phase: 'first', promptIndex: 0, whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'own', settings: false,
       });
     },
 
@@ -351,10 +358,37 @@ export const useGarden = create<GardenStore>((set, get) => {
     openReveal: () => {
       const top = holders(get().garden, get().now())[0];
       draftRequest?.abort();
-      set({ reveal: { open: true, entityId: top?.entityId ?? null }, focusedId: null, hoveredId: null, planting: 'closed', draft: null });
+      set({ reveal: { open: true, entityId: top?.entityId ?? null }, focusedId: null, hoveredId: null, planting: 'closed', draft: null, settings: false });
     },
     selectHolder: (entityId) => set({ reveal: { open: true, entityId } }),
     closeReveal: () => set({ reveal: { open: false, entityId: null } }),
+
+    /* ---------- settings (P10.2, screen p13) ---------- */
+
+    // One overlay at a time: settings closes whatever else is open.
+    openSettings: () => {
+      draftRequest?.abort();
+      set({ settings: true, focusedId: null, hoveredId: null, planting: 'closed', draft: null, reveal: { open: false, entityId: null } });
+    },
+    closeSettings: () => set({ settings: false }),
+    letGardenGo: async () => {
+      stopReplay();
+      if (seasonTimer) clearTimeout(seasonTimer);
+      if (keepTimer) clearTimeout(keepTimer);
+      keepTimer = null;
+      draftRequest?.abort();
+      kept = Promise.resolve(null);
+      await forget();
+      for (const p of Object.values(get().photos)) URL.revokeObjectURL(p.url);
+      const g = emptyGarden(realNow());
+      const views = viewAll(g, 0);
+      set({
+        garden: g, views, shown: views, replaying: false, positions: {}, photos: {}, events: [], tagSources: {},
+        clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
+        phase: 'threshold', owner: 'demo', promptIndex: 0, whisperOverride: null, reveal: { open: false, entityId: null },
+        settings: false,
+      });
+    },
 
     /* ---------- planting (screens p4–p6) ---------- */
 
@@ -364,7 +398,7 @@ export const useGarden = create<GardenStore>((set, get) => {
       if (!get().canPlantNow()) return;
       const draft = get().draft;
       set({
-        planting: step, focusedId: null,
+        planting: step, focusedId: null, settings: false,
         draft: draft ?? { kind, text: '', tags: null, source: null, dropped: [], place: nextPlace() },
       });
     },
