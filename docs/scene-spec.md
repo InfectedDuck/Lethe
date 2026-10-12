@@ -10,10 +10,10 @@ How each design-system rule becomes a Three.js parameter. The look reference is 
 | layout | design canvas (x, y) → z = (y−560)/100 × 1.6, x = (x−720)/100 × (11.5 − z)/11.5 (`src/scene/layout.ts`). The x spread cancels perspective, so from the default camera the garden keeps the design canvas's composition. |
 | flower height | 1.5 × size / 100 (a 160px sentence flower is 2.4 units tall) |
 | camera | perspective, fov 40, default position (0, 3.4, 11.5), looking at (0, 1.1, 0) |
-| drift | x ± 0.8 over 40s, y ± 0.15 over 55s. Never still, never fast. |
+| drift | x ± 0.8 over 40s, y ± 0.15 over 55s, around wherever the person left the camera. It starts after 5s without a touch and fades in over 2s. Never fast. |
 | focus | look at head + (1.0, 0, 0) from there + (0, 0.35, 4.4), gliding with damping k = 1.2/s. The flower stands at about a third of the width, its words on the right half (left 54%). Other flowers recede to opacity 0.3 over ~1s and every thread dims to ×0.35 (screen p2). |
-| overview | scroll out → rise to (0, 9, 6) looking down at 50°; the reveal uses this |
-| limits | orbit azimuth ±25°, polar 55–85°, distance 4–16 (drei `OrbitControls`, damping on, pan off) |
+| overview | scrolling out lowers the polar ceiling from 83° (at distance 11.5) to 55° (at 16), so the camera rises over the garden as it pulls back. The reveal (P9) can glide to that pose. |
+| limits | orbit azimuth ±25°, polar 55–83°, distance 4–16 (drei `OrbitControls`, damping on, pan off) |
 | background | `night` #0b0e14; ground #0d1119 with a soft radial lighten under clusters |
 | scene fog | `FogExp2(night, 0.045)` for depth; volumetric look comes from the fog banks below |
 
