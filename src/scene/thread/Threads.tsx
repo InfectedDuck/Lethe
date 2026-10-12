@@ -1,5 +1,6 @@
-// Every thread in the garden, between flower heads. Brightness comes from the engine (threadBrightness);
-// hovering or focusing a flower lights its threads and dims the rest, "to show what holds the memory up".
+// Every thread in the garden, between flower heads. Brightness comes from the engine (threadBrightness).
+// Hovering a flower lights its threads and dims the rest, "to show what holds the memory up". While a memory
+// is open, every thread recedes with the garden, so no light crosses its words (screen p2).
 
 import { useMemo } from 'react';
 import { threadBrightness, threadKey } from '../../engine';
@@ -14,8 +15,10 @@ export function Threads() {
   const views = useGarden((s) => s.views);
   const hoveredId = useGarden((s) => s.hoveredId);
   const focusedId = useGarden((s) => s.focusedId);
+  const events = useGarden((s) => s.events);
   const layout = useLayout();
-  const lit = hoveredId ?? focusedId;
+  const emphasisFor = (ids: string[]) =>
+    focusedId ? HOVER_DIM : !hoveredId ? 1 : ids.includes(hoveredId) ? HOVER_LIT : HOVER_DIM;
 
   const threads = useMemo(() => garden.threads.flatMap((t) => {
     const A = garden.memories[t.a], B = garden.memories[t.b];
@@ -31,11 +34,17 @@ export function Threads() {
     }];
   }), [garden, views, layout]);
 
+  // The latest tend at either end of a thread sends a ripple along it, away from the tended flower.
+  const rippleFor = (ids: string[]) => {
+    const e = events.filter((x) => x.type === 'tend' && ids.includes(x.id)).at(-1);
+    return e ? { at: e.at, fromB: e.id === ids[1] } : undefined;
+  };
+
   return (
     <>
       {threads.map((t) => (
         <ThreadArc key={t.key} seed={t.key} a={t.a} b={t.b} strength={t.strength} flicker={t.flicker}
-          emphasis={!lit ? 1 : t.ids.includes(lit) ? HOVER_LIT : HOVER_DIM} />
+          emphasis={emphasisFor(t.ids)} ripple={rippleFor(t.ids)} />
       ))}
     </>
   );
