@@ -26,6 +26,8 @@ export type ThreadArcProps = {
   seed: string;
   /** A tend just happened at one end: a bright ripple runs to the other end. `at` is performance.now(). */
   ripple?: { at: number; fromB: boolean };
+  /** The thread stays dark until this performance.now() time (the first thread waits for its pulse). */
+  holdUntil?: number;
 };
 
 export const HOVER_LIT = 1.4;
@@ -65,7 +67,7 @@ export function threadCurve(a: THREE.Vector3, b: THREE.Vector3): THREE.Quadratic
   return new THREE.QuadraticBezierCurve3(a.clone(), mid, b.clone());
 }
 
-export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed, ripple }: ThreadArcProps) {
+export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, suggested = false, seed, ripple, holdUntil }: ThreadArcProps) {
   // Keyed on coordinates, so a parent passing fresh Vector3s each render doesn't rebuild the curve.
   const curve = useMemo(() => threadCurve(a, b), [a.x, a.y, a.z, b.x, b.y, b.z]);
   const linePoints = useMemo(() => curve.getPoints(48), [curve]);
@@ -103,7 +105,8 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
 
   useFrame(({ clock }, dt) => {
     const cur = now.current;
-    cur.s += (strength - cur.s) * damp(1.2, dt); // state changes: ~3s, like dusk
+    const held = holdUntil !== undefined && performance.now() < holdUntil;
+    cur.s += ((held ? 0 : strength) - cur.s) * damp(1.2, dt); // state changes: ~3s, like dusk
     cur.e += (emphasis - cur.e) * damp(6, dt); // hover: ~0.4s, like the interface waking
     const s = cur.s, e = cur.e;
     const t = reduced ? 0 : clock.elapsedTime;

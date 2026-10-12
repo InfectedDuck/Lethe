@@ -8,7 +8,8 @@ import { useGarden } from '../../store/garden';
 import { flowerHead } from '../flower/Flower';
 import { baseToWorld } from '../layout';
 import { useLayout } from '../useLayout';
-import { HOVER_DIM, HOVER_LIT, ThreadArc } from './ThreadArc';
+import { BLOOM_MS } from '../fx/bloomTimeline';
+import { HOVER_DIM, HOVER_LIT, RIPPLE_TRAVEL_MS, ThreadArc } from './ThreadArc';
 
 export function Threads() {
   const garden = useGarden((s) => s.garden);
@@ -35,16 +36,23 @@ export function Threads() {
   }), [garden, views, layout]);
 
   // The latest tend at either end of a thread sends a ripple along it, away from the tended flower.
+  // A memory that just bloomed sends one too, once it has finished growing: its first threads are lit by a pulse
+  // of light from it to each neighbour, and only then fade in (the first-thread moment).
   const rippleFor = (ids: string[]) => {
-    const e = events.filter((x) => x.type === 'tend' && ids.includes(x.id)).at(-1);
-    return e ? { at: e.at, fromB: e.id === ids[1] } : undefined;
+    const e = events.filter((x) => (x.type === 'tend' || x.type === 'bloom') && ids.includes(x.id)).at(-1);
+    if (!e) return undefined;
+    return { at: e.type === 'bloom' ? e.at + BLOOM_MS.settle : e.at, fromB: e.id === ids[1] };
+  };
+  const holdFor = (ids: string[]) => {
+    const e = events.filter((x) => x.type === 'bloom' && ids.includes(x.id)).at(-1);
+    return e ? e.at + BLOOM_MS.settle + RIPPLE_TRAVEL_MS : undefined;
   };
 
   return (
     <>
       {threads.map((t) => (
         <ThreadArc key={t.key} seed={t.key} a={t.a} b={t.b} strength={t.strength} flicker={t.flicker}
-          emphasis={emphasisFor(t.ids)} ripple={rippleFor(t.ids)} />
+          emphasis={emphasisFor(t.ids)} ripple={rippleFor(t.ids)} holdUntil={holdFor(t.ids)} />
       ))}
     </>
   );
