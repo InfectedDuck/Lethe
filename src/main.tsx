@@ -6,9 +6,11 @@ import '../lethe-design-system/components/bundle.css';
 import './styles/app.css';
 import { App } from './App';
 import { FlowerSandbox } from './scene/sandbox/FlowerSandbox';
+import { ThreadSandbox } from './scene/sandbox/ThreadSandbox';
 
 // ?sandbox=<name> opens one effect on its own page for tuning (docs/build-plan.md: build each effect in a sandbox first).
 const sandbox = new URLSearchParams(location.search).get('sandbox');
-const Root = sandbox === 'flowers' ? FlowerSandbox : App;
+const SANDBOXES: Record<string, () => React.JSX.Element> = { flowers: FlowerSandbox, threads: ThreadSandbox };
+const Root = (sandbox && SANDBOXES[sandbox]) || App;
 
 createRoot(document.getElementById('root')!).render(<StrictMode><Root /></StrictMode>);
