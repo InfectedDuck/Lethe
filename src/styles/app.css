@@ -9,6 +9,7 @@ html, body, #root { height: 100%; overflow: hidden; }
 .top-left { top: var(--space-4); left: var(--space-4); }
 .top-right { top: var(--space-4); right: var(--space-4); }
 .bottom-left { bottom: var(--space-4); left: var(--space-4); }
+.bottom-right { bottom: var(--space-4); right: var(--space-4); }
 .bottom-center { bottom: var(--space-4); left: 50%; transform: translateX(-50%); opacity: 1; max-width: 640px; }
 
 /* Recollections: hover follows its flower (positioned from script); focus sits on the right half (screen p2). */

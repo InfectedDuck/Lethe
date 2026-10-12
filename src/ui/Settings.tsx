@@ -1,11 +1,13 @@
 // Settings (screen p13), opened from "lethe" top-left: where the garden lives, take it with you, or let it go.
 // Letting the garden go asks once more in plain words (D12), the one place the interface says "deletes".
+// Sound on/off is here too, beside the same word bottom-right.
 
 import { useEffect, useRef, useState } from 'react';
 import { layoutOf } from '../data/placement';
 import { useGarden } from '../store/garden';
 import { exportFile } from '../store/persist';
 import { Button, Overlay } from './ds';
+import { SoundToggle } from './SoundToggle';
 
 /** "lethe", top-left: the name is the way into settings. */
 export function SettingsEntry() {
@@ -51,6 +53,7 @@ function Main({ onLetGo }: { onLetGo: () => void }) {
         service, only a memory’s words are sent to it, and nothing is stored.
       </p>
       <div className="settings-choices">
+        <SoundToggle ref={first} />
         <Button onClick={() => void exportGarden()} disabled={exporting}>export my garden</Button>
         <Button onClick={onLetGo}>let the garden go</Button>
       </div>

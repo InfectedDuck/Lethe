@@ -6,12 +6,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGarden } from '../store/garden';
 import { Button } from './ds';
+import { useMuted } from './SoundToggle';
 
 /** The threshold fades away over this long once the person steps in. */
 const LEAVE_MS = 1200;
 
 export function Threshold() {
   const phase = useGarden((s) => s.phase);
+  const muted = useMuted();
   const [leaving, setLeaving] = useState<null | 'own' | 'demo'>(null);
   const enter = useRef<HTMLButtonElement>(null);
   // Back at the threshold after letting the garden go: step in afresh.
@@ -31,7 +33,7 @@ export function Threshold() {
         onClick={() => setLeaving((l) => l ?? 'own')}>
         <span className="threshold-seed" aria-hidden />
         <span className="title-lg threshold-line">Plant something you don’t want to lose.</span>
-        <span className="interface-sm threshold-hint">click anywhere to enter · sound on</span>
+        <span className="interface-sm threshold-hint">click anywhere to enter{muted ? '' : ' · sound on'}</span>
       </button>
       <Button className="threshold-demo" onClick={() => setLeaving((l) => l ?? 'demo')}>see a garden</Button>
     </div>
