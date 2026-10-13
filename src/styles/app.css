@@ -70,7 +70,7 @@ html, body, #root { height: 100%; overflow: hidden; }
 @keyframes breathe { 50% { box-shadow: 0 0 46px 26px rgba(255, 217, 160, 0.2), 0 0 100px 66px rgba(255, 217, 160, 0.07); } }
 .threshold-line { text-align: center; text-shadow: var(--glow-text); }
 .threshold-hint { color: var(--fog); transition: color .4s ease; }
-.threshold-demo { position: absolute; left: 50%; bottom: var(--space-5); transform: translateX(-50%); }
+.threshold-demo { position: absolute; left: 50%; bottom: var(--space-5); transform: translateX(-50%); display: flex; gap: var(--space-5); }
 
 /* First plantings (screens p8–p10): one card at a time, high on the screen, flowers growing below. */
 .prompt-card { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(540px, calc(100vw - 48px)); z-index: 5; }

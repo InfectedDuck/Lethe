@@ -15,6 +15,7 @@ import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
 import { Reveal, RevealEntry } from './ui/Reveal';
 import { Settings, SettingsEntry } from './ui/Settings';
+import { StoryEntry } from './ui/StoryEntry';
 import { SoundToggle } from './ui/SoundToggle';
 import { TendMote } from './ui/TendMote';
 import { Threshold } from './ui/Threshold';
@@ -39,6 +40,7 @@ export function App() {
         <div className="edge top-left top-left-row">
           <SettingsEntry />
           <RevealEntry />
+          <StoryEntry />
         </div>
       )}
       {inGarden && <Light />}
