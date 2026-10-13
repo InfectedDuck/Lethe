@@ -3,7 +3,7 @@
 // Focus: large, on the right half, while the camera brings the flower close on the left (screen p2).
 
 import { useEffect, useRef } from 'react';
-import { C, type Memory } from '../engine';
+import { C, type Memory, type MemoryState } from '../engine';
 import { useGarden } from '../store/garden';
 import { Button, Recollection } from './ds';
 import { useFollow } from './useFollow';
@@ -11,7 +11,22 @@ import { useFollow } from './useFollow';
 const SPACE_3 = 16;
 const SPACE_4 = 24;
 
-export function heldByNames(m: Memory): string[] {
+/**
+ * What holds a memory up, said only while it is vivid: the people and places it shares with another living memory
+ * (its threads), and its year. Once it fades it has begun to forget exactly these names (D22), so saying them here
+ * would hand them back; its threads, lit on hover, still show what holds it, and the whisper names the holder.
+ */
+export function heldByNames(m: Memory, state: MemoryState): string[] {
+  if (state !== 'vivid') return [];
+  const { garden } = useGarden.getState();
+  const others = Object.values(garden.memories).filter((o) => o.id !== m.id && !o.lost);
+  const shared = (e: string) => others.some((o) => o.people.includes(e) || o.places.includes(e));
+  return [...m.people, ...m.places].filter(shared).map((e) => garden.entities[e]?.name).filter((n): n is string => !!n)
+    .concat(m.happenedAt ? [m.happenedAt] : []);
+}
+
+/** The memory's own specifics, the first words it forgets (D22): its people, its places, its year. */
+export function keywordsOf(m: Memory): string[] {
   const { garden } = useGarden.getState();
   return [...m.people, ...m.places].map((e) => garden.entities[e]?.name).filter((n): n is string => !!n)
     .concat(m.happenedAt ? [m.happenedAt] : []);
@@ -41,7 +56,8 @@ export function HoverRecollection() {
   if (!m || !view || focusedId || revealing) return null;
   return (
     <div ref={el} className="hover-recollection surface" style={{ visibility: 'hidden' }}>
-      <Recollection text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state} heldBy={heldByNames(m)} />
+      <Recollection text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state}
+        heldBy={heldByNames(m, view.state)} keywords={keywordsOf(m)} />
     </div>
   );
 }
@@ -66,7 +82,8 @@ export function FocusRecollection() {
   const back = <Button onClick={() => focus(null)}>back to the garden</Button>;
   return (
     <div ref={box} key={m.id} className="focus-recollection surface" role="dialog" aria-label={`memory · ${view.state}`}>
-      <Recollection size="lg" text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state} heldBy={heldByNames(m)}
+      <Recollection size="lg" text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state}
+        heldBy={heldByNames(m, view.state)} keywords={keywordsOf(m)}
         actions={view.state === 'lost'
           ? <><Button variant="pill" disabled={light < C.RETURN_COST} onClick={() => returnToMemory(m.id)}>return</Button>{back}</>
           : <><Button variant="pill" disabled={light < C.TEND_COST} onClick={() => tendMemory(m.id)}>tend</Button>
