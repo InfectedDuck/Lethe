@@ -35,10 +35,10 @@ Use desktop Chrome or Edge, around 1440 × 900 or larger. Sound starts with the 
 | Ending image | [Final composition](docs/screenshots/ending.png) |
 | Recording and narration guide | [Contest kit](docs/contest-kit.md) |
 | Presentation and PowerPoint files | [Presentation package](docs/presentation/README.md) |
-| Recorded video URL | Pending the owner's recording and upload |
+| Recorded video | [The three-minute film, 1080p with sound](recordings/lethe-film-3min-1080p.mp4), recorded from the live site |
 | Voting URL | Pending the organizer's actual voting destination |
 
-Attach the recorded video and the actual voting link when available. Their destinations are not invented here.
+Attach the actual voting link when available. Its destination is not invented here.
 
 ## Key decisions and trade-offs
 
