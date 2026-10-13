@@ -38,5 +38,22 @@ export function GardenWhisper() {
   }, [line, story.running, presentation.line]);
 
   if (!line || phase !== 'garden') return null;
+  // The episode is shown to a room (D26): its lines are captions in the memory type, large enough to read from the
+  // back of a hall, each fading in over the last. The film's are larger still.
+  if (episode) {
+    return (
+      <p className={`lt-whisper ${story.running ? 'memory-lg' : 'memory'} episode-caption${visible ? '' : ' is-gone'}`} role="status">
+        <span key={line} className="episode-caption-line">{line}</span>
+      </p>
+    );
+  }
   return <Whisper className="edge bottom-center whisper" visible={visible}>{line}</Whisper>;
+}
+
+/** The film's turning points: a title card in the empty sky above the garden (D26). */
+export function FilmTitle() {
+  const title = useGarden((s) => (s.story.running ? s.story.title ?? null : null));
+  const phase = useGarden((s) => s.phase);
+  if (!title || phase !== 'garden') return null;
+  return <p className="title film-title" aria-live="polite"><span key={title} className="film-title-line">{title}</span></p>;
 }

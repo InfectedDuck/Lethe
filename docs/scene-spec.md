@@ -138,6 +138,14 @@ All of it is skipped with `prefers-reduced-motion`, except the state change itse
 
 DPR is clamped to [1, 1.75]. Quality drops automatically if drei `PerformanceMonitor` reports a decline.
 
+## Episode film presentation
+
+Decisions D25 and D26 extend the reference rendering for the fictional episode. The three-minute film makes two visits to the same life, with all state changes coming from the engine. Episode captions use `memory-lg` (32px) during the film and `memory` (24px) in play, in `text-primary`. Title cards use the existing `title` style (40px) in the sky at 15% of viewport height. Captions fade in over 1.2s and titles over 1.8s; reduced motion removes these animations. A soft, edgeless band of night behind the words preserves their contrast against threads.
+
+Living flowers release pollen through one additive point cloud: vivid 7 motes at alpha 0.55, fading 3 at 0.3, ghost and lost none. Motes rise 1.1 world units over 7–11s and dim to 35% while a memory is open or a relationship holder is emphasized. Reduced motion removes the drifting pollen. Cluster ground pools use vitality-weighted living flower colors, mixed halfway toward fog, at 0.06 × lift + 0.035 × ring. Threads keep their original warm ivory color.
+
+The ending keeps the rest of the changed garden at 45% flower opacity and 40% thread strength while emphasizing an actual surviving holder. The standard interactive reveal retains its existing dimming. Color, ghost outlines and dark seeds remain part of the composition.
+
 ## Reduced motion
 
 `prefers-reduced-motion`: keep every state's look, but stop the camera drift, sway, breathing, thread pulses, motes and fog drift. Bloom and dissolve become 0.6s crossfades.

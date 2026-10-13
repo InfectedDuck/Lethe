@@ -144,3 +144,20 @@ html, body, #root { height: 100%; overflow: hidden; }
   .episode-actions { gap: var(--space-2); max-width: calc(100vw - 32px); white-space: normal; }
   .top-left-row { flex-wrap: wrap; max-width: 75vw; }
 }
+
+/* Episode captions and film titles (D26): read from the back of a room. Memory type, text colour, a soft glow;
+   each new line fades up from a slight blur over 1.2s, never fast. */
+.episode-caption { position: absolute; left: 50%; bottom: var(--space-5); transform: translateX(-50%); width: min(980px, calc(100vw - 48px));
+  margin: 0; color: var(--text-primary); text-shadow: var(--glow-text), 0 0 18px rgba(11, 14, 20, 0.9); pointer-events: none; z-index: 3; }
+.episode-caption-line, .film-title-line { display: inline-block; animation: caption-in 1.2s ease both; }
+.film-title { position: absolute; left: 50%; top: 15%; transform: translateX(-50%); width: min(1100px, calc(100vw - 48px)); margin: 0;
+  text-align: center; color: var(--text-primary); text-shadow: var(--glow-text), 0 0 24px rgba(11, 14, 20, 0.9); pointer-events: none; z-index: 3; }
+.film-title-line { animation-duration: 1.8s; }
+/* A breath of night behind the words, so a thread crossing behind them never cuts a letter. No edge, no card. */
+.episode-caption-line, .film-title-line { position: relative; }
+.episode-caption-line::before, .film-title-line::before { content: ''; position: absolute; inset: -0.5em -2em; z-index: -1; pointer-events: none;
+  background: linear-gradient(to right, transparent, rgba(11, 14, 20, 0.66) 9%, rgba(11, 14, 20, 0.66) 91%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 32%, #000 68%, transparent); }
+@keyframes caption-in { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: blur(0); } }
+.episode-actions { bottom: 132px; }
+@media (prefers-reduced-motion: reduce) { .episode-caption-line, .film-title-line { animation: none; } }

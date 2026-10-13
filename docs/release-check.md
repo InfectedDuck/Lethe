@@ -1,0 +1,37 @@
+# Release check
+
+Checked on 13 October 2026 for the three-minute film and playable episode release.
+
+## Verification
+
+- 256 tests across 26 files passed; TypeScript checking passed.
+- All three simulations passed with the established outcomes: daily 25/25, lazy 14/16, none 11/25.
+- Production build passed. Vite reports the existing large-chunk advisory; rendering architecture was preserved for this release.
+- The full film completed both seasons in isolated Chrome. The first rooftop became a seed; the second remained a ghost through its new connection. The ending exposed the gardening actions. No runtime exceptions were observed.
+- A missing favicon request found during capture was fixed with an empty favicon declaration, preserving the interface's no-icons rule.
+- Fresh screenshots cover the opening, quotation, planting, tending, quiet seed, ghost rooftop and ending.
+- The npm audit of production dependencies reported zero vulnerabilities.
+- The production site at `https://lethe-nine.vercel.app` was checked anonymously after deployment. Its full three-minute film completed with no runtime exceptions or failed requests. The homepage, client assets and preview image returned 200; invalid tagging input returned 400 and the configured Groq endpoint returned valid tags with 200.
+- Public probes for local environment files, Git metadata, private QA and presentation artifacts returned 404. No locally configured secret values were found in the deployed client.
+
+The deployed application comes from commit `1c41e45`. The subsequent changes to this report and the recording guide are documentation only. The repository contains the matching release file tree.
+
+## Repository hygiene
+
+The local audit scanned reachable text blobs, candidate source and documentation files, and production output for credential patterns and exact locally configured secret values. It found no suspected secret matches. Only `.env.example` is tracked; local environment files, deployment state and build output remain excluded.
+
+Private QA files, isolated browser profiles, Office scratch files and local recordings are now ignored. Documentation and presentation materials remain in the repository but are excluded from the deployment upload. The source design system stays available to the build.
+
+The audit is a bounded repository and bundle check, not a claim that every possible credential format is detectable. Secret values were not printed or copied into the report.
+
+## Project materials
+
+The README now presents the current episode and film, controls, privacy, local setup and curated screenshots. `docs/about.md` collects the design decisions, AI use and credits. The film and playable links use the established production hostname.
+
+## Human checks still to complete
+
+- Listen to the final mix on the speakers used for recording.
+- Record the video and link it from `docs/about.md`.
+- Run the unfamiliar-visitor check; do not mark it complete without participants.
+
+The website currently uses English copy. Chinese presentation wording is supplied in the presentation plan; it is not an implemented Chinese interface in this release.
