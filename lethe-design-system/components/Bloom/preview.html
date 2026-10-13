@@ -1,0 +1,22 @@
+<!-- @dsCard group="Garden" height=560 subtitle="Four kinds in four states: vivid, fading, ghost, lost." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Bloom — preview</title></head>
+<body>
+<div id="root" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px 8px;justify-items:center;padding:12px 8px"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  var kinds = [['sentence','first-dance'],['song','night-bus'],['place','lake-house'],['photo','grandmother', '#e9a98f']];
+  var cells = [];
+  ['vivid','fading','ghost','lost'].forEach(function (s, si) {
+    kinds.forEach(function (k, ki) {
+      cells.push(h('div', { key: s + ki, style: { display:'grid', justifyItems:'center' } },
+        h(L.Bloom, { kind: k[0], seed: k[1], hue: k[2], state: s, size: 84 }),
+        h('span', { className: 'interface-sm', style: { color: 'var(--fog)' } }, k[0] + ' · ' + s)));
+    });
+  });
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, cells));
+</script>
+</body>
+</html>

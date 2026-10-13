@@ -1,0 +1,16 @@
+<!-- @dsCard group="Interface" height=300 subtitle="Deep night at 80%, backdrop blur, 16px radius, 8% white border." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Overlay — preview</title></head>
+<body>
+<div id="root" style="padding:24px;background:radial-gradient(circle at 70% 40%, rgba(242,213,138,.35), transparent 40%), radial-gradient(circle at 20% 80%, rgba(185,163,240,.3), transparent 45%)"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(L.Overlay, { title: 'What holds this memory', width: 420,
+    actions: [h(L.Button, { key: 1, variant: 'pill' }, 'tend · 1 light'), h(L.Button, { key: 2 }, 'close')] },
+    h('p', { className: 'memory', style: { margin: '0 0 12px', color: 'var(--text-primary)' } }, 'Grandma Mei, Hangzhou.'),
+    h('p', { className: 'interface-sm', style: { margin: 0 } }, 'two threads · tending this also brightens her kitchen and Clair de Lune')));
+</script>
+</body>
+</html>

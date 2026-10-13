@@ -1,0 +1,14 @@
+<!-- @dsCard group="Interface" height=72 subtitle="The tending currency: small glowing dots." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>LightCounter — preview</title></head>
+<body>
+<div id="root" style="display:flex;gap:40px;padding:24px;align-items:center"></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(L.LightCounter, { value: 3, max: 5, showLabel: true }), h(L.LightCounter, { value: 5, max: 5 }), h(L.LightCounter, { value: 0, max: 5 })));
+</script>
+</body>
+</html>

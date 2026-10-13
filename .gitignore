@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output and caches
+dist/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+coverage/
+
+# Secrets: never commit real keys. .env.example is the template.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Deploy / tooling state
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,69 @@
+<!-- @dsCard group="Garden" height=610 page subtitle="The whole garden at 1440 × 900, scaled: fog, threads, the sample memories, one recollection." -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Garden — preview</title>
+<style>
+  .stage { position: relative; width: 1440px; height: 900px; overflow: hidden; transform-origin: 0 0; background: var(--night); }
+  .fog { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; background: var(--fog); }
+  .fog.a { left: 1120px; top: 520px; width: 460px; height: 320px; opacity: var(--fog-thick); }
+  .fog.b { left: -160px; top: 700px; width: 1000px; height: 300px; opacity: var(--fog-thin); }
+  .fog.c { left: 1180px; top: 80px; width: 360px; height: 280px; opacity: var(--fog-thick); }
+  .threads { position: absolute; inset: 0; }
+  .b { position: absolute; transform: translate(-50%, -100%); }
+  .rec { position: absolute; left: 560px; top: 150px; }
+  .plant { position: absolute; left: 24px; bottom: 24px; opacity: var(--ui-idle); }
+  .light { position: absolute; right: 24px; top: 24px; opacity: var(--ui-idle); }
+  .whisper { position: absolute; left: 0; right: 0; bottom: 36px; }
+  .mark { position: absolute; left: 40px; top: 24px; color: var(--fog); }
+</style></head>
+<body>
+<div id="scale"><div class="stage" id="stage">
+  <div class="fog b"></div>
+  <svg class="threads" id="threads" width="1440" height="900" viewBox="0 0 1440 900"></svg>
+  <div id="blooms"></div>
+  <div class="fog a"></div><div class="fog c"></div>
+  <div class="rec" id="rec"></div>
+  <div class="plant" id="plant"></div>
+  <div class="light" id="light"></div>
+  <div class="whisper" id="whisper"></div>
+  <span class="interface-sm mark">lethe</span>
+</div></div>
+<script>
+  var L = window.Lethe, h = React.createElement;
+  /* x, y = where the flower meets the ground; hx, hy = roughly its head, for threads */
+  /* Sample content (see the Sample content section): x, y = where the flower meets the ground */
+  var M = [
+    { id: 1, kind: 'sentence', x: 430, y: 520, v: .9, s: 160 },
+    { id: 2, kind: 'place', x: 280, y: 610, v: .9, s: 170 },
+    { id: 3, kind: 'song', x: 560, y: 720, v: .9, s: 140 },
+    { id: 4, kind: 'photo', hue: '#e8a87c', x: 1000, y: 600, v: .9, s: 150 },
+    { id: 5, kind: 'sentence', x: 1180, y: 500, v: .9, s: 150 },
+    { id: 6, kind: 'place', x: 1060, y: 780, v: .45, s: 160 },
+    { id: 7, kind: 'sentence', x: 150, y: 380, v: .45, s: 130 },
+    { id: 8, kind: 'photo', hue: '#d9c7a8', x: 320, y: 330, v: .45, s: 120 },
+    { id: 9, kind: 'song', x: 1320, y: 300, v: .45, s: 130 },
+    { id: 10, kind: 'place', x: 1330, y: 690, v: .1, s: 140 }
+  ];
+  var head = { sentence: .8, song: .62, place: .1, photo: .62 };
+  M.forEach(function (m) { m.hx = m.x; m.hy = m.y - m.s * 1.5 * head[m.kind]; });
+  var by = {}; M.forEach(function (m) { by[m.id] = m; });
+  var T = [[1,2,.95],[1,3,.85],[2,3,.85],[4,5,.9],[4,6,.55],[5,6,.55],[7,8,.45],[9,10,.15]];
+  ReactDOM.createRoot(document.getElementById('threads')).render(h(React.Fragment, null, T.map(function (t, i) {
+    var a = by[t[0]], b = by[t[1]];
+    return h(L.Thread, { key: i, from: { x: a.hx, y: a.hy }, to: { x: b.hx, y: b.hy }, strength: t[2] });
+  })));
+  ReactDOM.createRoot(document.getElementById('blooms')).render(h(React.Fragment, null, M.map(function (m) {
+    return h('div', { key: m.id, className: 'b', style: { left: m.x, top: m.y } }, h(L.Bloom, { kind: m.kind, seed: 'memory-' + m.id, hue: m.hue, vitality: m.v, size: m.s }));
+  })));
+  ReactDOM.createRoot(document.getElementById('rec')).render(h(L.Recollection, { size: 'lg',
+    text: '“You don’t have to be brave all the time.”', kind: 'sentence', state: 'vivid',
+    heldBy: ['Grandma Mei', 'Hangzhou', '2014'], actions: [h(L.Button, { key: 1, variant: 'pill' }, 'tend'), h(L.Button, { key: 2 }, 'let go')] }));
+  ReactDOM.createRoot(document.getElementById('plant')).render(h(L.PlantField, null));
+  ReactDOM.createRoot(document.getElementById('light')).render(h(L.LightCounter, { value: 3, max: 5, showLabel: true }));
+  ReactDOM.createRoot(document.getElementById('whisper')).render(h(L.Whisper, null, 'The library rooftop is drifting into fog. A faint thread to Satie still holds it.'));
+  function fit() { var k = Math.min(1, document.documentElement.clientWidth / 1440); var st = document.getElementById('stage');
+    st.style.transform = 'scale(' + k + ')'; document.getElementById('scale').style.height = (900 * k) + 'px'; }
+  fit(); window.addEventListener('resize', fit);
+</script>
+</body>
+</html>

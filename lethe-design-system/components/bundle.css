@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@400;500&display=swap');
+
+/* Lethe — the garden is dark only. */
+html, body { background: var(--night); color: var(--fog); margin: 0; }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+:where(button, input, a, [tabindex]):focus-visible { outline: 1.5px solid var(--focus); outline-offset: 3px; }
+
+/* Bloom */
+.lt-bloom { display: block; overflow: visible; }
+.lt-bloom-halo { animation: lt-breathe 7s ease-in-out infinite; }
+@keyframes lt-breathe { 0%, 100% { opacity: .8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+.lt-motes circle { animation: lt-dissolve 10s linear infinite; opacity: 0; }
+@keyframes lt-dissolve { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: .75; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+
+/* Thread */
+.lt-thread-motes { animation: lt-flow 9s linear infinite; }
+@keyframes lt-flow { to { stroke-dashoffset: -260; } }
+
+/* Recollection */
+.lt-recollection { margin: 0; max-width: 360px; display: grid; gap: var(--space-1); }
+.lt-recollection.is-lg { max-width: 440px; }
+.lt-recollection blockquote { margin: 0 0 var(--space-2); color: var(--text-primary); text-wrap: pretty; text-shadow: var(--glow-text); }
+.lt-recollection.is-ghost blockquote, .lt-recollection.is-lost blockquote { color: var(--fog); text-shadow: none; }
+.lt-speech { font-style: italic; }
+.lt-gap { display: inline-block; height: .9em; vertical-align: baseline; border-bottom: 1px dotted var(--fog); opacity: .45; }
+.lt-recollection .interface-sm { color: var(--fog); }
+.lt-recollection-media img { display: block; max-width: 100%; border-radius: var(--radius-hair); margin-bottom: var(--space-3); }
+.lt-recollection-actions { display: flex; gap: var(--space-3); margin-top: var(--space-3); align-items: center; }
+
+/* Button: text-only, or a thin 1px outline pill; never filled */
+.lt-btn { appearance: none; background: none; border: 1px solid transparent; cursor: pointer; color: var(--fog); padding: var(--space-1) 0;
+  transition: color .4s ease, border-color .4s ease; }
+.lt-btn.is-pill { border-color: var(--fog); border-radius: var(--radius-pill); padding: 6px var(--space-3); }
+.lt-btn:hover, .lt-btn:focus-visible { color: var(--text-primary); }
+.lt-btn.is-pill:hover, .lt-btn.is-pill:focus-visible { border-color: var(--text-primary); }
+.lt-btn.is-pill:focus-visible { outline-offset: 3px; border-radius: var(--radius-pill); }
+.lt-btn:disabled { cursor: default; color: var(--fog); opacity: .5; border-color: var(--fog); }
+.lt-btn.is-text:disabled { border-color: transparent; }
+
+/* LightCounter */
+.lt-light { display: inline-flex; align-items: center; gap: var(--space-3); }
+.lt-light-dots { display: inline-flex; gap: var(--space-2); }
+.lt-light-dot { width: 6px; height: 6px; border-radius: var(--radius-pill); box-sizing: border-box; border: 1px solid var(--fog); opacity: .55; }
+.lt-light-dot.is-lit { border: 0; background: var(--light); box-shadow: var(--glow-light); opacity: 1; }
+.lt-light-label { color: var(--fog); }
+
+/* Overlay */
+.lt-overlay { box-sizing: border-box; background: var(--overlay-fill); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 1px solid var(--overlay-border); border-radius: var(--radius-overlay); padding: var(--space-4); color: var(--fog); }
+.lt-overlay-title { margin: 0 0 var(--space-3); color: var(--text-primary); }
+.lt-overlay-actions { display: flex; gap: var(--space-3); margin-top: var(--space-4); align-items: center; }
+
+/* PlantField */
+.lt-plant { box-sizing: border-box; display: grid; gap: var(--space-2); width: min(560px, 100%); padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent; border-radius: var(--radius-overlay); transition: background-color .6s ease, border-color .6s ease; }
+.lt-plant:focus-within { background: var(--overlay-fill); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-color: var(--overlay-border); }
+.lt-plant-kinds { display: flex; gap: var(--space-3); }
+.lt-kind { appearance: none; background: none; border: 0; padding: 0; cursor: pointer; color: var(--fog); display: inline-flex; align-items: center; gap: 6px; }
+.lt-kind::before { content: ''; width: 5px; height: 5px; border-radius: var(--radius-pill); background: var(--lt-hue); opacity: .35; transition: opacity .4s, box-shadow .4s; }
+.lt-kind.is-on { color: var(--text-primary); }
+.lt-kind.is-on::before { opacity: 1; box-shadow: 0 0 8px var(--lt-hue); }
+.lt-plant-row { display: flex; align-items: center; gap: var(--space-3); }
+.lt-plant-seed { flex: none; width: 7px; height: 7px; border-radius: var(--radius-pill); background: var(--lt-hue); box-shadow: 0 0 12px var(--lt-hue); }
+.lt-plant-input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text-primary); padding: var(--space-1) 0; }
+.lt-plant-input::placeholder { color: var(--fog); }
+
+/* Whisper */
+.lt-whisper { margin: 0; color: var(--fog); text-align: center; transition: opacity 2.4s ease, filter 2.4s ease; }
+.lt-whisper.is-gone { opacity: 0; filter: blur(4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-bloom-halo, .lt-thread-motes { animation: none; }
+  .lt-motes circle { animation: none; opacity: .5; }
+  .lt-whisper, .lt-btn, .lt-plant { transition: none; }
+}
