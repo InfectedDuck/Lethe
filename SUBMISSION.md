@@ -2,7 +2,7 @@
 
 **A garden that forgets**
 
-**Topic:** Your Life as a World · Culture and Creativity
+**Topic:** 3 · Your Life as a World · Culture and Creativity
 
 [Play the fictional season](https://lethe-nine.vercel.app/?demo=play) · [Watch the three-minute film](https://lethe-nine.vercel.app/?demo=film) · [Begin a personal garden](https://lethe-nine.vercel.app/)
 
