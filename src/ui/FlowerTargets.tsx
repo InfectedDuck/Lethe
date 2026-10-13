@@ -15,6 +15,8 @@ export function FlowerTargets() {
   const layout = useLayout();
   const { hover, focus } = useGarden.getState();
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+  /** The last style written per button: unchanged frames write nothing, so the page never re-lays itself out. */
+  const written = useRef(new Map<string, string>());
 
   // Reading order: left to right across the garden, as the eye sweeps it.
   const ids = useMemo(() => Object.keys(garden.memories).filter((id) => layout[id]).sort((a, b) => layout[a].x - layout[b].x), [garden, layout]);
@@ -22,9 +24,12 @@ export function FlowerTargets() {
   useFollow(ids, (id, p) => {
     const b = buttons.current.get(id);
     if (!b) return;
+    const size = p?.onScreen ? Math.round(Math.max(40, p.r * 1.6)) : 0;
+    const key = p?.onScreen ? `${size} ${Math.round(p.x - size / 2)} ${Math.round(p.y - size / 2)}` : 'hidden';
+    if (written.current.get(id) === key) return;
+    written.current.set(id, key);
     if (!p || !p.onScreen) { b.style.visibility = 'hidden'; return; }
-    const size = Math.max(40, p.r * 1.6);
-    b.style.width = b.style.height = `${Math.round(size)}px`;
+    b.style.width = b.style.height = `${size}px`;
     b.style.transform = `translate(${Math.round(p.x - size / 2)}px, ${Math.round(p.y - size / 2)}px)`;
     b.style.visibility = 'visible';
   });

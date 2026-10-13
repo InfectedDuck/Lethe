@@ -53,6 +53,9 @@ export type FlowerProps = {
   dissolveAge?: number;
 };
 
+/** Below this alpha a part of the flower is not drawn. */
+const INVISIBLE = 0.002;
+
 /** Tending's swell: light rises over 0.4s, then settles back over 1.6s. Returns 0–1. */
 export function swellAmount(sinceMs: number): number {
   const t = sinceMs / 1000;
@@ -70,6 +73,9 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
 
   const group = useRef<THREE.Group>(null);
   const halo = useRef<THREE.Mesh>(null);
+  const fill = useRef<THREE.Mesh>(null);
+  const lines = useRef<THREE.LineSegments>(null);
+  const motes = useRef<THREE.Points>(null);
   const first = useRef(true);
   const droop = useRef(0);
   /** Glow and halo eased toward the state's targets; the tend swell is added on top each frame. */
@@ -140,6 +146,12 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
       const h = geo.head.y / geo.height;
       halo.current.position.x = geo.head.x + u.uBend.value * h * h * geo.height;
     }
+    // A part that would draw nothing is not drawn at all (P12.1: in a big garden every draw call counts).
+    const op = u.uOpacity.value;
+    if (halo.current) halo.current.visible = u.uHalo.value * op > INVISIBLE;
+    if (fill.current) fill.current.visible = Math.max(u.uFill.value, u.uLeafFill.value, u.uSolid.value) * op > INVISIBLE;
+    if (lines.current) lines.current.visible = op > INVISIBLE;
+    if (motes.current) motes.current.visible = u.uMotes.value * op > INVISIBLE;
   });
 
   const haloW = geo.width * 0.96, haloH = kind === 'place' ? geo.height * 0.4 : haloW;
@@ -150,14 +162,15 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
       <mesh ref={halo} position={[geo.head.x, geo.head.y, -0.05]} material={mats.halo}>
         <planeGeometry args={[haloW, haloH]} />
       </mesh>
-      <mesh geometry={geo.fill} material={mats.fill} />
-      <lineSegments geometry={geo.lines} material={mats.lines} />
-      <points geometry={geo.motes} material={mats.motes} />
+      <mesh ref={fill} geometry={geo.fill} material={mats.fill} />
+      <lineSegments ref={lines} geometry={geo.lines} material={mats.lines} />
+      <points ref={motes} geometry={geo.motes} material={mats.motes} />
       {(bloomAge !== undefined || (bornAt !== undefined && performance.now() - bornAt < 2400)) &&
         <BloomGrowth bornAt={bornAt ?? 0} age={bloomAge} seed={seed} />}
       {lost && <DarkSeed diedAt={diedAt} age={dissolveAge} />}
-      {/* Invisible hit area: the whole drawing box, so thin flowers are easy to reach; for a lost memory, its seed. */}
-      <mesh position={[0, lost ? 0.25 : geo.height / 2, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut} onClick={onClick}>
+      {/* Hit area: the whole drawing box, so thin flowers are easy to reach; for a lost memory, its seed. Never drawn:
+          the raycaster still finds a mesh that is not visible. */}
+      <mesh visible={false} position={[0, lost ? 0.25 : geo.height / 2, 0]} onPointerOver={onPointerOver} onPointerOut={onPointerOut} onClick={onClick}>
         <planeGeometry args={lost ? [0.7, 0.5] : [geo.width * 0.7, geo.height]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
