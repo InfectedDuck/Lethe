@@ -22,7 +22,6 @@ export function Effects() {
   // Step down in the cheapest order. Rebuilding the bloom recompiles the composer's shader, which can freeze a
   // Windows (Direct3D) browser for seconds, so it is the last step, taken only once the resolution is already 1.
   const decline = () => {
-    console.info('PM decline at', Math.round(performance.now()), 'dpr', dpr, 'quality', quality);
     if (forced) return;
     if (dpr > 1) setDpr(Math.max(1, dpr - DPR_STEP));
     else if (quality === 'high') setQuality('low');

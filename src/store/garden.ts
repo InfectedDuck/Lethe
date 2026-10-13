@@ -16,6 +16,7 @@ import { offlineTag } from '../tagging/offline';
 import { apiTag, type TagSource } from '../tagging/tag';
 import { dominantColor } from '../ui/photo';
 import { ALONE_WHISPER, RULE_WHISPER } from '../ui/whispers';
+import { sceneReady } from './sceneReady';
 import { forget, keep, load, markKept } from './persist';
 
 type Clock = { debugOffset: number };
@@ -155,7 +156,8 @@ const ALONE_AFTER_MS = 2400;
  * first frame has been drawn before the first seed falls.
  */
 const GROW_IN_AFTER_MS = 450;
-const GROW_IN_ON_LOAD_MS = 1800;
+/** A ?demo link grows in once the scene's shaders are compiled, and never waits longer than this. */
+const SCENE_READY_MAX_MS = 4000;
 const GROW_IN_STAGGER_MS = 160;
 const isDemoLink = typeof location !== 'undefined' && /[?&]demo\b/.test(location.search);
 let nextId = 0;
@@ -237,8 +239,15 @@ export const useGarden = create<GardenStore>((set, get) => {
     if (saying && get().whisperOverride === saying) set({ whisperOverride: null });
     saying = null;
   };
-  // A demo link (?demo) grows the garden in and opens on the rule, before anything else is said.
-  if (isDemoLink) setTimeout(() => { growIn(GROW_IN_ON_LOAD_MS); say(RULE_WHISPER); }, 0);
+  // A demo link (?demo) grows the garden in and opens on the rule, before anything else is said. Its seeds wait
+  // in the dark while the scene compiles its shaders (sceneReady), so the first bloom never stutters.
+  if (isDemoLink) {
+    setTimeout(() => {
+      growIn(SCENE_READY_MAX_MS);
+      void Promise.race([sceneReady, new Promise((r) => setTimeout(r, SCENE_READY_MAX_MS))])
+        .then(() => { growIn(GROW_IN_AFTER_MS); say(RULE_WHISPER); });
+    }, 0);
+  }
   /** The garden grows in: one quiet bloom per memory, left to right across the canvas. */
   const growIn = (afterMs: number) => {
     const ids = Object.keys(get().garden.memories);
