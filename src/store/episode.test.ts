@@ -1,6 +1,7 @@
 // The fictional episode's store contract (plan §6, "store and presentation"): one light and one planting, a paused
 // clock, a single season, truthful reflections, cancellation across sessions, no personal persistence, and a film
-// that can be stopped at any beat, pauses with the tab, and ends without resurrecting anything.
+// that can be stopped at any beat, pauses with the tab, plays a second season of the same life, and ends without
+// resurrecting anything.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./persist', () => ({
@@ -16,7 +17,7 @@ import { C } from '../engine';
 import { keep } from './persist';
 import { episodeReflection, useGarden } from './garden';
 import { createPresentationClock, presentationClock } from './presentationClock';
-import { startStory, stopStory } from '../ui/story';
+import { FILM_SECONDS, FILM_TITLES, startStory, stopStory } from '../ui/story';
 
 const s = () => useGarden.getState();
 const count = (type: string, id?: string) => s().events.filter((e) => e.type === type && (!id || e.id === id) && !e.quiet).length;
@@ -165,25 +166,51 @@ describe('a late answer cannot cross into a new session', () => {
 });
 
 describe('the film', () => {
-  const FILM_BEATS_S = [5, 10, 20, 30, 41, 45, 55, 62, 68, 75, 82, 88];
+  // Beats across all seven acts (plus up to 4s while the scene warms): prologue, fragments, planting, the tend, the
+  // first season, the rewind, the second season, the coda.
+  const FILM_BEATS_S = [3, 10, 22, 30, 47, 55, 63, 74, 82, 95, 102, 110, 112, 118, 128, 136, 143, 152, 162, 170, 178];
 
-  it('plays to its end on real actions, and resurrects nothing', async () => {
+  it('plays both seasons to the end on real actions, and resurrects nothing', async () => {
     startStory();
-    await vi.advanceTimersByTimeAsync(100_000);
+    await vi.advanceTimersByTimeAsync((FILM_SECONDS + 10) * 1000);
     expect(s().story.running).toBe(false);
     expect(s().episode?.stage).toBe('finished');
+    // The second season: the rooftop planted with Leo, the light to Grandma Mei, and the rooftop still here.
     expect(s().episode?.tended).toEqual(['m1']);
-    expect(s().episode?.planted).toEqual(['ep-choice-tea']);
-    expect(s().garden.memories.m10.lost).toBe(true);
+    expect(s().episode?.planted).toEqual(['ep-choice-rooftop']);
+    expect(s().garden.memories.m10.lost).toBeFalsy();
+    expect(s().views.m10.state).toBe('ghost');
     expect(count('bloom', 'm10')).toBe(0);
     expect(s().presentation.line).toBe(CLOSING_LINES[1]);
+  });
+
+  it('the first season loses the rooftop; the film then regrows the same life and plays on', async () => {
+    startStory();
+    await vi.advanceTimersByTimeAsync((4 + 100) * 1000);
+    expect(s().story.running).toBe(true);
+    expect(s().episode?.planted).toEqual(['ep-choice-tea']);
+    expect(s().garden.memories.m10.lost).toBe(true);
+    await vi.advanceTimersByTimeAsync(8 * 1000);
+    expect(s().story).toMatchObject({ running: true, title: FILM_TITLES.again });
+    expect(s().episode).toMatchObject({ mode: 'film', stage: 'exploring', day: EPISODE_DAY, planted: [], tended: [] });
+    expect(s().garden.memories.m10.lost).toBeFalsy();
+    expect(Object.keys(s().garden.memories)).toHaveLength(23);
+  });
+
+  it('a restart from outside the film still ends it', async () => {
+    startStory();
+    await vi.advanceTimersByTimeAsync(30 * 1000);
+    s().restartEpisode();
+    expect(s().story.running).toBe(false);
+    await vi.advanceTimersByTimeAsync(200 * 1000);
+    expect(s().episode).toMatchObject({ mode: 'play', stage: 'exploring', planted: [], tended: [] });
   });
 
   it.each(FILM_BEATS_S)('can be stopped at %ss, leaving a live episode and no lingering emphasis', async (at) => {
     startStory();
     await vi.advanceTimersByTimeAsync(at * 1000);
     stopStory();
-    expect(s().story.running).toBe(false);
+    expect(s().story).toMatchObject({ running: false, title: null });
     // The film's own emphasis goes at once. A season that has already passed carries on as the playable episode
     // does: its reflection may begin (with its overview), but nothing the film lit lingers.
     expect(s().presentation).toMatchObject({ holderId: null, headId: null, quiet: false });
@@ -191,7 +218,7 @@ describe('the film', () => {
     expect(s().focusedId).toBeNull();
     expect(s().episode?.mode).toBe('play');
     const focused = s().focusedId, stage = s().episode?.stage;
-    await vi.advanceTimersByTimeAsync(120_000);
+    await vi.advanceTimersByTimeAsync(220_000);
     // No beat fires after stopping (a replay already under way still finishes on its own).
     expect(s().focusedId).toBe(focused);
     expect(s().story.running).toBe(false);
@@ -200,14 +227,14 @@ describe('the film', () => {
 
   it('pauses while the tab is hidden instead of skipping beats', async () => {
     startStory();
-    await vi.advanceTimersByTimeAsync(4000 + 9000);
+    await vi.advanceTimersByTimeAsync(4000 + 21_000);
     expect(s().focusedId).toBe('m1');
     presentationClock.hide();
     await vi.advanceTimersByTimeAsync(30_000);
     expect(s().focusedId).toBe('m1');
     presentationClock.show();
-    await vi.advanceTimersByTimeAsync(9000);
-    expect(s().focusedId).toBe('m10');
+    await vi.advanceTimersByTimeAsync(7000);
+    expect(s().focusedId).toBe('m4');
   });
 });
 
