@@ -1,0 +1,4 @@
+# Never upload local secrets with a CLI deploy. Keys live in Vercel's Environment Variables.
+.env
+.env.*
+!.env.example

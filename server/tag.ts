@@ -45,9 +45,9 @@ const TIMEOUT_MS = 8000;
 
 const SYSTEM = `You tag personal memories for a quiet garden app. Extract only what the memory states or clearly implies.
 - people: specific people (named, or by relation like "Dad", "my sister"). Not "me"/"I". Not generic groups.
-- places: specific places (cities, buildings, rooms that belong to someone like "her kitchen" -> name it with its owner if known).
+- places: specific places (cities, buildings, rooms that belong to someone like "her kitchen" -> name it with its owner if known). When a place sits inside a named city or region, list both: "her balcony in Hangzhou" -> "Grandma Mei's balcony" and "Hangzhou".
 - feelings: at most two single lowercase words for the memory's emotional tone.
-If a person or place matches a known entity (same person under another name: "Mom" = "my mother"; "her kitchen" when Grandma Mei is the subject is still a place, not Grandma Mei), return that entity's id. Otherwise id is null.
+If a person or place matches a known entity (same person under another name: "Mom" = "my mother"; "her kitchen" when Grandma Mei is the subject is still a place, not Grandma Mei), return that entity's id exactly as listed (for example "place:hangzhou"). Otherwise id is null.
 For songs, the artist is not a person in the person's life; do not tag the artist.`;
 
 function userMessage(req: TagRequest): string {
