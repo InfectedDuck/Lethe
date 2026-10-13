@@ -71,14 +71,30 @@ function RevealLabels() {
   const held = useRevealHeld() ?? [];
   const garden = useGarden((s) => s.garden);
   const labels = useRef(new Map<string, HTMLSpanElement>());
+  /** Labels already placed this frame, so the next one can keep clear of them. */
+  const placed = useRef<{ x: number; y: number; w: number; h: number }[]>([]);
+  /** Which spot each label took last frame: tried first, so labels hold still while the camera drifts. */
+  const spot = useRef(new Map<string, number>());
   useFollow(held, (id, p) => {
+    if (id === held[0]) placed.current = [];
     const el = labels.current.get(id);
     if (!el) return;
     if (!p || !p.onScreen) { el.style.visibility = 'hidden'; return; }
     // Beside the flower on its right, or on its left when the right edge is too close; never off screen.
-    const w = el.offsetWidth, gap = p.r * 0.7 + 12;
-    const x = p.x + gap + w <= innerWidth - 24 ? p.x + gap : Math.max(24, p.x - gap - w);
-    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(p.y - 9)}px)`;
+    // When two flowers stand at about the same height, a later label tries the other side, then a line lower or
+    // higher, so no two labels ever lie across each other.
+    const w = el.offsetWidth, h = el.offsetHeight || 18, gap = p.r * 0.7 + 12, line = h + 6;
+    const right = p.x + gap, left = p.x - gap - w;
+    const sides = right + w <= innerWidth - 24 ? [right, Math.max(24, left)] : [Math.max(24, left), right];
+    const spots = [0, line, -line, 2 * line, -2 * line].flatMap((dy) => sides.map((x) => ({ x, y: p.y - 9 + dy })));
+    const free = (c: { x: number; y: number }) => c.x + w <= innerWidth - 8 && placed.current.every((q) =>
+      c.x + w + 8 <= q.x || q.x + q.w + 8 <= c.x || c.y + h + 4 <= q.y || q.y + q.h + 4 <= c.y);
+    const last = spot.current.get(id);
+    const i = last !== undefined && spots[last] && free(spots[last]) ? last : Math.max(0, spots.findIndex(free));
+    spot.current.set(id, i);
+    const { x, y } = spots[i];
+    placed.current.push({ x, y, w, h });
+    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     el.style.visibility = 'visible';
   });
   return (

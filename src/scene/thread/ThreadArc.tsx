@@ -104,6 +104,7 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
 
   const core = useRef<Line2>(null);
   const glow = useRef<Line2>(null);
+  const lights = useRef<THREE.Points>(null);
   // New threads fade in from dark; a departing one starts as bright as it was.
   // `v` is plain visibility: the core never drops below a faint floor while a thread exists, so a thread that is
   // waiting for its first pulse, or has gone out, needs its own fade to nothing.
@@ -131,7 +132,7 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     if (coreMat) {
       coreMat.opacity = Math.min(1, (suggested ? 0.5 : 0.12 + 0.6 * s) * e * fl * v);
       coreMat.linewidth = suggested ? 1 : 0.6 + 0.8 * s;
-      coreMat.color.copy(base).multiplyScalar(suggested ? 1 : (0.6 + 1.2 * s) * Math.min(e, 1.2));
+      coreMat.color.copy(base).multiplyScalar(suggested ? 1 : (0.55 + 0.8 * s) * Math.min(e, 1.2));
     }
     if (glowMat) {
       glowMat.opacity = suggested ? 0 : Math.min(1, (0.02 + 0.05 * s) * e * fl * v);
@@ -166,6 +167,12 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     });
     pos.needsUpdate = true; alpha.needsUpdate = true; size.needsUpdate = true;
     material.uniforms.uPixelRatio.value = dpr;
+    // What would draw nothing is not drawn (P12.1): most faint threads carry no light, and a gone thread no line.
+    let lit = false;
+    for (let i = 0; i < count; i++) if (alpha.getX(i) > 0.002) { lit = true; break; }
+    if (lights.current) lights.current.visible = lit;
+    if (core.current) core.current.visible = (coreMat?.opacity ?? 0) > 0.002;
+    if (glow.current) glow.current.visible = (glowMat?.opacity ?? 0) > 0.002;
   });
 
   return (
@@ -173,7 +180,7 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
       <Line ref={glow} points={linePoints} color={TOKENS.thread} lineWidth={3} transparent opacity={0} depthWrite={false} />
       <Line ref={core} points={linePoints} color={TOKENS.thread} lineWidth={1} transparent opacity={0} depthWrite={false}
         toneMapped={false} dashed={suggested} dashSize={0.06} gapSize={0.05} />
-      <points geometry={geometry} material={material} frustumCulled={false} />
+      <points ref={lights} geometry={geometry} material={material} frustumCulled={false} />
     </>
   );
 }
