@@ -40,6 +40,9 @@ void main() {
     ring += s.w * exp(-pow((r - s.z * 0.62) / 0.03, 2.0)) * 0.3;
   }
   col += uLift * (lift * 0.05 + ring * 0.035);
+  // The ground nearest the viewer lifts toward fog: 5% in linear light at the bottom of the home frame (z ≈ 6), which
+  // reads about #1c2026, like screens p3. The garden stands on a faint slate floor instead of floating in black.
+  col = mix(col, uLift, smoothstep(0.5, 6.0, vWorld.y) * 0.05);
   // The garden dissolves into night toward the edges.
   float far = smoothstep(9.0, 24.0, length(vWorld * vec2(0.8, 1.0)));
   gl_FragColor = vec4(mix(col, uNight, far), 1.0);

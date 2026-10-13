@@ -59,7 +59,7 @@ Use `flowerColor(kind, state, hue)` from `src/engine/color.ts`. It is tested to 
 | thing | value |
 |---|---|
 | curve | `QuadraticBezierCurve3(headA, mid + up · 0.28 · distance, headB)`, 48 samples |
-| core | drei `<Line>` width 0.6 + 0.8·s px, colour `thread` × (0.6 + 1.2·s), opacity 0.12 + 0.6·s |
+| core | drei `<Line>` width 0.6 + 0.8·s px, colour `thread` × (0.55 + 0.8·s), opacity 0.12 + 0.6·s (was × (0.6 + 1.2·s), which blew the core to white glare under bloom; p3 shows a soft warm line) |
 | glow | second line width 3 + 6·s, opacity 0.02 + 0.05·s (bloom does the rest) |
 | pulse | shader on the core: a Gaussian bright spot moving along u every 4–7s (seeded period); only if s > 0.3 |
 | motes | 2–4 points travelling along the curve over 7–13s when s > 0.3 |
@@ -74,7 +74,7 @@ Use `flowerColor(kind, state, hue)` from `src/engine/color.ts`. It is tested to 
 - **Memory banks:** one per memory, just in front of it. Opacity 0 when vivid, 0.07 when fading, `fog-thick` 0.14 when ghost or lost, eased over ~3s.
 - **No cut lines:** alpha fades to 0 at the ground (`smoothstep(0, 0.7, worldY)`), so a vertical plane never shows where it meets the ground.
 - **Density follows neglect:** thin opacity = (0.06 + 0.10 × share of memories that are not vivid) / 3.
-- **Ground** (`src/scene/ground/Ground.tsx`): #0d1119, lifted under each thread-connected cluster by its average vitality, with two faint elliptical rings per cluster (screens p1/p3), fading to night beyond about 9–24 units.
+- **Ground** (`src/scene/ground/Ground.tsx`): #0d1119, lifted under each thread-connected cluster by its average vitality, with two faint elliptical rings per cluster (screens p1/p3), fading to night beyond about 9–24 units. Toward the viewer it lifts toward `fog`: 5% (linear light) from z 0.5 to z 6, the bottom of the home frame, which reads about #1c2026, matching the floor of screens p3 (brightness 30 there, 31.5 here). *Look frozen 13 Oct (`docs/look-log/20261013-1100-look-freeze-garden.png`).*
 - **Depth:** fainter memories sit behind thicker fog. Put one bank between the camera and each ghost.
 
 ## Tending feedback (P5)
