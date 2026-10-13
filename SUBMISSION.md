@@ -9,14 +9,14 @@ Lethe turns memories into a night garden. You plant a memory: a sentence someone
 
 ## Try it
 
-- **Fastest:** open the link and click **watch a season**. The garden plays its own story in about 85 seconds: connection, tending, planting, two days away, a memory dissolving, its return, and the reveal. Any click or key hands control back.
-- **By hand:** follow the 90-second demo in [README.md](README.md#the-90-second-demo): hover → tend → plant → let two weeks pass (<kbd>`</kbd> → slider to +14 → **arrive**) → return a dark seed → **what holds you**.
-- **Your own garden:** on the opening screen, click anywhere except "see a garden". Seven prompts start a garden that is kept only in your browser.
+- **Watch (90 seconds):** https://lethe-nine.vercel.app/?demo=film. One click plays the garden's own film of a season: attachment, a choice, loss and acceptance. Any input stops it and hands the garden to you.
+- **Play the season:** https://lethe-nine.vercel.app/?demo=play. A fictional life of 23 memories, one light left, one planting, then one season passes. You choose what to tend, and the garden shows what that choice held.
+- **Your own garden:** https://lethe-nine.vercel.app/. On the opening screen, seven prompts start a garden kept only in your browser.
 - **Locally:** `npm install && npm run dev`. No API key is needed.
 
 ## Key design decisions and trade-offs
 
-The full log is in [docs/decisions.md](docs/decisions.md) (D1–D23). The decisions that shaped the project most:
+The full log is in [docs/decisions.md](docs/decisions.md) (D1–D25). The decisions that shaped the project most:
 
 | Decision | Why | Trade-off |
 |---|---|---|
@@ -30,6 +30,7 @@ The full log is in [docs/decisions.md](docs/decisions.md) (D1–D23). The decisi
 | **3D with procedural flowers** (D1), React Three Fiber | Real depth, fog and parallax with a 2D botanical look. Each flower grows from its memory's id, so no two are alike and a memory always grows the same flower. | Heavier than SVG. Quality drops automatically on slow GPUs, and big gardens draw at most 60 threads (D19). |
 | **Kept only in the browser** (IndexedDB via Dexie) | Memories are private: no accounts, no server storage. | No sync between devices. |
 | **No numbers in the interface** | States are words (vivid, fading, ghost, lost). "What holds you" uses lines of light, not scores. | Less precise, but the garden is about memory, not performance. |
+| **A contest episode** (D24): 23 authored memories, one remaining light, one optional planting and one explicit 21-day season, playable or as a 90-second film | A visitor has minutes, not weeks. The episode lets them feel attachment, choice, loss and acceptance in one visit, using the real engine: no outcome is forced, and the same actions drive the film and play. | The episode's clock pauses between actions and its numbers differ from a personal garden (D8–D10 apply to personal gardens only). Episode data never touches a personal garden. |
 | **Story mode** (D20) | Makes the first pillar visible in 85 seconds, using real garden actions, not a video. | A new mode in a product with no menus, so it is quiet, skippable and only in the demo garden. |
 
 ## How AI is used
@@ -47,7 +48,8 @@ The full log is in [docs/decisions.md](docs/decisions.md) (D1–D23). The decisi
 
 ## Simulated data
 
-- The **ten memories in the demo garden** ("see a garden", `?demo`, story mode) are **fictional sample content** (`lethe-design-system/sample-content.md`, `src/data/sample.ts`), written for this project. Their starting states are set on purpose to show every stage.
+- The **contest episode** (`?demo=play`, `?demo=film`) is a **fictional life**: 23 memories written for this project (`src/data/episode.ts`), including six with prior tends, so the season has something to lose. The episode says so on screen ("a fictional life").
+- The **ten sample memories** of the earlier demo garden are also fictional (`lethe-design-system/sample-content.md`, `src/data/sample.ts`).
 - `?stress=200` generates a large **synthetic** garden for performance testing (`src/data/stress.ts`).
 - Anything a person plants in their own garden is their own input and stays in their browser.
 
