@@ -59,6 +59,7 @@ cp .env.example .env      # optional: add GROQ_API_KEY or ANTHROPIC_API_KEY
 
 | | |
 |---|---|
+| [SUBMISSION.md](SUBMISSION.md) | **hackathon submission:** topic, design decisions, AI use, similar projects, simulated data, credits |
 | [docs/build-plan.md](docs/build-plan.md) | phases, mini-tasks, schedule, cut line, demo path |
 | [docs/decisions.md](docs/decisions.md) | resolved conflicts between plan, screens and design system |
 | [docs/architecture.md](docs/architecture.md) | diagrams: system, modules, states, data model, flows |
