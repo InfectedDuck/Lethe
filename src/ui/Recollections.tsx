@@ -67,6 +67,8 @@ export function FocusRecollection() {
   const view = useGarden((s) => (focusedId ? s.views[focusedId] : null));
   const light = useGarden((s) => s.garden.light);
   const m = useGarden((s) => (focusedId ? s.garden.memories[focusedId] : null));
+  const episode = useGarden((s) => s.episode);
+  const editable = !episode || episode.stage === 'exploring' || (episode.stage === 'finished' && episode.continued);
   const { tendMemory, letGoMemory, returnToMemory, focus } = useGarden.getState();
   const box = useRef<HTMLDivElement>(null);
 
@@ -85,9 +87,10 @@ export function FocusRecollection() {
       <Recollection size="lg" text={m.text} seed={m.id} kind={m.kind} vitality={view.vitality} state={view.state}
         heldBy={heldByNames(m, view.state)} keywords={keywordsOf(m)}
         actions={view.state === 'lost'
-          ? <><Button variant="pill" disabled={light < C.RETURN_COST} onClick={() => returnToMemory(m.id)}>return</Button>{back}</>
-          : <><Button variant="pill" disabled={light < C.TEND_COST} onClick={() => tendMemory(m.id)}>tend</Button>
-              <Button onClick={() => letGoMemory(m.id)}>let go</Button>{back}</>} />
+          ? <><Button variant="pill" disabled={!editable || light < C.RETURN_COST} onClick={() => returnToMemory(m.id)}>return</Button>{back}</>
+          : <><Button variant="pill" disabled={!editable || light < C.TEND_COST} onClick={() => tendMemory(m.id)}>tend</Button>
+              <Button disabled={!editable} onClick={() => letGoMemory(m.id)}>let go</Button>{back}</>} />
+      {episode?.stage === 'exploring' && !light && <p className="interface-sm plant-note">your light has found its place. a season can pass when you are ready.</p>}
     </div>
   );
 }

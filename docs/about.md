@@ -15,7 +15,7 @@ Lethe turns memories into a night garden. You plant a memory: a sentence someone
 
 ## Key design decisions and trade-offs
 
-The full log is in [docs/decisions.md](decisions.md) (D1–D20). The decisions that shaped the project most:
+The full log is in [docs/decisions.md](decisions.md) (D1–D23). The decisions that shaped the project most:
 
 | Decision | Why | Trade-off |
 |---|---|---|
@@ -24,7 +24,8 @@ The full log is in [docs/decisions.md](decisions.md) (D1–D20). The decisions t
 | **Light is scarce** (D8): 3 per real day, up to 5. Tending and returning cost 1 each. | Tending becomes choosing, not a chore. | — |
 | **Time** (D9): 1 real day is 1 garden week, and fog slows to a quarter speed after 14 days away. | Forgetting is felt over real weeks, and a long absence never wipes a garden. | Hard to show live, which is why story mode exists (D20). |
 | **Loss is not permanent** (D4, D18): a lost memory leaves a dark seed and keeps its words, and returning costs one light. | "Forgetting is beautiful, not punishing." Nothing is deleted unless you choose to let it go. | Less dramatic than permanent loss, but kinder. |
-| **Offline-first tagging** (D13): a tagger in the browser (the compromise NLP library, relation words, a feelings word list) tags every memory. An LLM is an optional upgrade. | It works with no key and no network, and planting never waits. Only a memory's words ever leave the device. | Offline tags are less precise. A provider's tags replace them if one answers within 2.5s. |
+| **The specifics go first** (D22): as a memory fades, its own people and places, then names and numbers, then other meaningful words drop out of its text; the small words that hold a sentence together go last. | That is how real forgetting works: you keep the gist ("a kitchen, smelling of osmanthus") long after the details. A faded memory still reads as a memory, not as noise. | Seeded per memory, so a memory always loses the same words. Some meaning is gone until it is tended. |
+| **Offline-first tagging** (D13): a tagger in the browser (the compromise NLP library, relation words, a feelings word list) tags every memory. An LLM is an optional upgrade. | It works with no key and no network, and planting never waits. Only a memory's words ever leave the device. | Offline tags are less precise. A provider's tags replace them if one answers within 4s. |
 | **3D with procedural flowers** (D1), React Three Fiber | Real depth, fog and parallax with a 2D botanical look. Each flower grows from its memory's id, so no two are alike and a memory always grows the same flower. | Heavier than SVG. Quality drops automatically on slow GPUs, and big gardens draw at most 60 threads (D19). |
 | **Kept only in the browser** (IndexedDB via Dexie) | Memories are private: no accounts, no server storage. | No sync between devices. |
 | **No numbers in the interface** | States are words (vivid, fading, ghost, lost). "What holds you" uses lines of light, not scores. | Less precise, but the garden is about memory, not performance. |
