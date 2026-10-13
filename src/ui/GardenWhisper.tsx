@@ -17,17 +17,20 @@ export function GardenWhisper() {
   const summary = useGarden((s) => s.returnSummary);
   const override = useGarden((s) => s.whisperOverride);
   const phase = useGarden((s) => s.phase);
-  const line = override ?? ((summary && returnWhisper(garden, views, summary)) || idleWhisper(garden, views));
+  const story = useGarden((s) => s.story);
+  // While the story plays, its line comes first and nothing hides it: the story decides when it changes.
+  const line = story.line ?? override ?? ((summary && returnWhisper(garden, views, summary)) || idleWhisper(garden, views));
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     setVisible(true);
+    if (story.running) return;
     const hide = () => setVisible(false);
     const t = setTimeout(hide, SHOW_MS);
     const onMove = () => hide();
     const arm = setTimeout(() => addEventListener('pointermove', onMove, { once: true }), ARM_MS);
     return () => { clearTimeout(t); clearTimeout(arm); removeEventListener('pointermove', onMove); };
-  }, [line]);
+  }, [line, story.running]);
 
   if (!line || phase !== 'garden') return null;
   return <Whisper className="edge bottom-center whisper" visible={visible}>{line}</Whisper>;

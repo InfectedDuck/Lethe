@@ -11,9 +11,11 @@ import {
 import type { Tags } from '../engine/garden';
 import { FIRST_PLANTING_PLACES, layoutOf, placeNew, type Place } from '../data/placement';
 import { FIRST_PROMPTS, sampleGarden } from '../data/sample';
+import { stressGarden } from '../data/stress';
 import { offlineTag } from '../tagging/offline';
 import { apiTag, type TagSource } from '../tagging/tag';
 import { dominantColor } from '../ui/photo';
+import { ALONE_WHISPER, RULE_WHISPER } from '../ui/whispers';
 import { forget, keep, load, markKept } from './persist';
 
 type Clock = { debugOffset: number };
@@ -71,6 +73,8 @@ type GardenStore = {
   reveal: { open: boolean; entityId: string | null };
   /** The settings overlay (P10.2), opened from "lethe" top-left. */
   settings: boolean;
+  /** "watch a season" (D20): the garden plays its own story, and says one line at a time beneath it. */
+  story: { running: boolean; line: string | null };
   draft: Draft | null;
 
   now: () => number;
@@ -104,6 +108,8 @@ type GardenStore = {
   openSettings: () => void;
   closeSettings: () => void;
   letGardenGo: () => Promise<void>;
+  /** The story's state; `src/ui/story.ts` runs it and calls the store's actions like a person would. */
+  setStory: (patch: Partial<GardenStore['story']>) => void;
 
   openPlanting: (step?: Exclude<PlantingStep, 'closed'>, kind?: Kind) => void;
   closePlanting: () => void;
@@ -120,14 +126,23 @@ type GardenStore = {
 const realNow = () => Date.now();
 /** ?days=N previews the garden N garden days ahead (same as the hidden slider). For demos and screenshots. */
 const urlDays = typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('days')) || 0 : 0;
-/** ?demo (or any preview/sandbox link) opens straight into the demo garden; otherwise the threshold comes first. */
-const startPhase: Phase = typeof location !== 'undefined' && /[?&](demo|days|sandbox)\b/.test(location.search) ? 'garden' : 'threshold';
+/** ?stress=N (P12.1): open a seeded garden of N memories instead of the demo, to check the frame rate. */
+const urlStress = typeof location !== 'undefined' ? Math.min(400, Number(new URLSearchParams(location.search).get('stress')) || 0) : 0;
+/** ?demo (or any preview/sandbox/stress link) opens straight into the garden; otherwise the threshold comes first. */
+const startPhase: Phase = typeof location !== 'undefined' && /[?&](demo|days|sandbox|stress)\b/.test(location.search) ? 'garden' : 'threshold';
 /** "A season passes" (P8.3): after the first plantings, this many garden days go by, shown with the return replay. */
 const SEASON_DAYS = 10;
 /** Let the last bloom finish and the line be read before the season passes. */
 const SEASON_AFTER_MS = 2800;
 const SEASON_LINE_MS = 3200;
 let seasonTimer: ReturnType<typeof setTimeout> | null = null;
+/** A line the garden says once (the rule), and its timer. Only this line is ever hushed early. */
+let saying: string | null = null;
+let sayTimer: ReturnType<typeof setTimeout> | null = null;
+/** The rule is said when the demo garden opens; a memory planted alone hears it once its bloom has settled. */
+const RULE_FOR_MS = 7000;
+const ALONE_AFTER_MS = 2400;
+const isDemoLink = typeof location !== 'undefined' && /[?&]demo\b/.test(location.search);
 let nextId = 0;
 const newId = (prefix = 'm') => `${prefix}${Date.now().toString(36)}${(nextId++).toString(36)}`;
 const dropTags = (tags: DraftTags, dropped: string[]): DraftTags => {
@@ -149,7 +164,8 @@ let replayTimer: ReturnType<typeof setInterval> | null = null;
 const stopReplay = () => { if (replayTimer) clearInterval(replayTimer); replayTimer = null; };
 
 export const useGarden = create<GardenStore>((set, get) => {
-  const initial = sampleGarden(100, realNow());
+  const stress = urlStress ? stressGarden(urlStress, 100, realNow()) : null;
+  const initial = stress?.garden ?? sampleGarden(100, realNow());
   // Any change to the garden ends a replay: the garden shows what is true now.
   const withViews = (g: Garden, now: number) => {
     stopReplay();
@@ -189,6 +205,25 @@ export const useGarden = create<GardenStore>((set, get) => {
       seasonTimer = setTimeout(() => set({ whisperOverride: null }), SEASON_LINE_MS);
     }, SEASON_AFTER_MS);
   };
+  /** Say a line over the usual whisper for a while (never over the season's line), then let the usual one return. */
+  const say = (line: string, afterMs = 0, forMs = RULE_FOR_MS) => {
+    if (sayTimer) clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => {
+      if (get().whisperOverride && get().whisperOverride !== saying) return;
+      saying = line;
+      set({ whisperOverride: line });
+      sayTimer = setTimeout(hush, forMs);
+    }, afterMs);
+  };
+  /** Stop a said line (an arrive, a reset): the return whisper or the idle one takes over. */
+  const hush = () => {
+    if (sayTimer) clearTimeout(sayTimer);
+    sayTimer = null;
+    if (saying && get().whisperOverride === saying) set({ whisperOverride: null });
+    saying = null;
+  };
+  // A demo link (?demo) opens on the rule, before anything else is said.
+  if (isDemoLink) setTimeout(() => say(RULE_WHISPER), 0);
   const setDraft = (patch: Partial<Draft>) => set((s) => (s.draft ? { draft: { ...s.draft, ...patch } } : {}));
 
   const initialViews = viewAll(initial, 100 + urlDays);
@@ -198,7 +233,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     views: initialViews,
     shown: initialViews,
     replaying: false,
-    positions: {},
+    positions: stress?.positions ?? {},
     photos: {},
     hoveredId: null,
     focusedId: null,
@@ -212,6 +247,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     whisperOverride: null,
     reveal: { open: false, entityId: null },
     settings: false,
+    story: { running: false, line: null },
     draft: null,
 
     now: () => {
@@ -251,6 +287,9 @@ export const useGarden = create<GardenStore>((set, get) => {
       });
       set((s) => ({ tagSources: { ...s.tagSources, [id]: source } }));
       emit('bloom', [id]);
+      // Planted alone: once it has grown, the garden says how memories hold each other (not in the first plantings,
+      // where the season and its return speak next).
+      if (get().phase === 'garden' && !get().garden.threads.some((t) => t.a === id || t.b === id)) say(ALONE_WHISPER, ALONE_AFTER_MS);
       // Offline tags only: ask the provider in the background; if it answers in time, its tags replace them.
       if (source === 'offline') {
         void apiTag(get().garden, kind, text).then((better) => {
@@ -266,6 +305,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     // to how it is now, one after another (most changed first), while the fog rises. Lost ones dissolve once they have
     // become ghosts; ghosts about to be lost glow once, so they can still be saved.
     arrive: () => {
+      hush();
       const before = viewAll(get().garden, get().garden.lastSeenAt);
       const g = structuredClone(get().garden);
       const now = get().now();
@@ -291,6 +331,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     },
 
     resetDemo: () => {
+      hush();
       stopReplay();
       if (seasonTimer) clearTimeout(seasonTimer);
       draftRequest?.abort();
@@ -305,7 +346,7 @@ export const useGarden = create<GardenStore>((set, get) => {
 
     /* ---------- the threshold and the first plantings (P8) ---------- */
 
-    seeDemo: () => { get().resetDemo(); set({ phase: 'garden' }); },
+    seeDemo: () => { get().resetDemo(); set({ phase: 'garden' }); say(RULE_WHISPER); },
 
     // Coming back: the garden as it was left, then the time away, played as the return replay (P7.1).
     enterOwn: async () => {
@@ -371,6 +412,11 @@ export const useGarden = create<GardenStore>((set, get) => {
       set({ settings: true, focusedId: null, hoveredId: null, planting: 'closed', draft: null, reveal: { open: false, entityId: null } });
     },
     closeSettings: () => set({ settings: false }),
+    // When the story ends, its return line is old news: the garden's usual whisper takes over.
+    setStory: (patch) => set((s) => ({
+      story: { ...s.story, ...patch },
+      ...(patch.running === false && s.story.running ? { returnSummary: null } : {}),
+    })),
     letGardenGo: async () => {
       stopReplay();
       if (seasonTimer) clearTimeout(seasonTimer);

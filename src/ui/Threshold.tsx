@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGarden } from '../store/garden';
 import { Button } from './ds';
 import { useMuted } from './SoundToggle';
+import { startStory } from './story';
 
 /** The threshold fades away over this long once the person steps in. */
 const LEAVE_MS = 1200;
@@ -14,14 +15,18 @@ const LEAVE_MS = 1200;
 export function Threshold() {
   const phase = useGarden((s) => s.phase);
   const muted = useMuted();
-  const [leaving, setLeaving] = useState<null | 'own' | 'demo'>(null);
+  const [leaving, setLeaving] = useState<null | 'own' | 'demo' | 'story'>(null);
   const enter = useRef<HTMLButtonElement>(null);
   // Back at the threshold after letting the garden go: step in afresh.
   useEffect(() => { if (phase === 'threshold') { setLeaving(null); enter.current?.focus(); } }, [phase]);
 
   useEffect(() => {
     if (!leaving) return;
-    const t = setTimeout(() => (leaving === 'own' ? void useGarden.getState().enterOwn() : useGarden.getState().seeDemo()), LEAVE_MS);
+    const t = setTimeout(() => {
+      if (leaving === 'own') void useGarden.getState().enterOwn();
+      else if (leaving === 'story') startStory();
+      else useGarden.getState().seeDemo();
+    }, LEAVE_MS);
     return () => clearTimeout(t);
   }, [leaving]);
 
@@ -35,7 +40,10 @@ export function Threshold() {
         <span className="title-lg threshold-line">Plant something you don’t want to lose.</span>
         <span className="interface-sm threshold-hint">click anywhere to enter{muted ? '' : ' · sound on'}</span>
       </button>
-      <Button className="threshold-demo" onClick={() => setLeaving((l) => l ?? 'demo')}>see a garden</Button>
+      <div className="threshold-demo">
+        <Button onClick={() => setLeaving((l) => l ?? 'demo')}>see a garden</Button>
+        <Button onClick={() => setLeaving((l) => l ?? 'story')}>watch a season</Button>
+      </div>
     </div>
   );
 }

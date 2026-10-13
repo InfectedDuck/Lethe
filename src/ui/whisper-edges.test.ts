@@ -34,7 +34,7 @@ describe('idleWhisper names the fading memory whole', () => {
     plant(g, { id: 'a', kind: 'sentence', text: '“You don’t have to be brave all the time.”' }, 0, REAL);
     setVitality(g, 'a', 0.5, 7);
     const line = idleWhisper(g, viewAll(g, 7))!;
-    expect(line).toContain('You don’t have to be brave is drifting into fog.');
+    expect(line).toContain('“You don’t have to be brave” is drifting into fog.');
     expect(line).not.toContain('You don’t have is drifting');
   });
 

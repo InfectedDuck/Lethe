@@ -10,6 +10,11 @@ import {
 
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** The garden's one rule, said as the garden would: threads come from sharing a person or a place. */
+export const RULE_WHISPER = 'Memories that share someone or somewhere hold each other up.';
+/** After planting a memory that joined no thread: an invitation, never a "you haven't". */
+export const ALONE_WHISPER = `It stands alone for now. ${RULE_WHISPER}`;
+
 /** A memory's short name in a whisper: "The library rooftop", "Gymnopédie No. 1". */
 export function nameOf(m: Memory): string {
   const short = firstWords(m.text, 4);
@@ -22,6 +27,20 @@ export function nameOf(m: Memory): string {
   return short;
 }
 
+/** Up to this many words, someone's words are quoted whole in a whisper. */
+const WHOLE_QUOTE_WORDS = 8;
+
+/**
+ * A memory's name as the garden says it. Someone's words keep their quotation marks, so they never run into the
+ * sentence around them: "“We’ll figure it out” is about to be lost.", not "We’ll figure it out is about to be lost.".
+ * A short saying is quoted whole ("“Text me when you get home”"), a long one by its opening words.
+ */
+export function spokenName(m: Memory): string {
+  const quote = m.text.trim().match(/^[“"]([^”"]+)[”"]/)?.[1].trim().replace(/[.,;:!?…]+$/, '');
+  if (!quote) return nameOf(m);
+  return `“${quote.split(/\s+/).length <= WHOLE_QUOTE_WORDS ? quote : nameOf(m)}”`;
+}
+
 /** How a memory is named when it is the one holding another: a song by its artist ("Satie"), others by name. */
 function holderNameOf(m: Memory): string {
   if (m.kind === 'song') {
@@ -30,7 +49,7 @@ function holderNameOf(m: Memory): string {
     const artist = titlePart.split(',').slice(1).join(',').trim().replace(/\.$/, '');
     if (artist) return artist;
   }
-  return nameOf(m);
+  return spokenName(m);
 }
 
 /** What still holds a memory: its strongest living thread, named by what the two share. */
@@ -47,7 +66,9 @@ export function holderOf(g: Garden, views: Record<string, MemoryView>, id: strin
     best = { other: o, brightness, shared: sharedId ? g.entities[sharedId]?.name : undefined };
   }
   if (!best) return null;
-  if (best.brightness < 0.3) return { line: `A faint thread to ${holderNameOf(best.other)} still holds it.` };
+  // Mid-sentence, a name's leading article is lowercase: "a faint thread to the sea at night".
+  const mid = holderNameOf(best.other).replace(/^(The|A|An) /, (w) => w.toLowerCase());
+  if (best.brightness < 0.3) return { line: `A faint thread to ${mid} still holds it.` };
   return { line: `${best.shared ?? holderNameOf(best.other)} still holds it.` };
 }
 
@@ -58,7 +79,7 @@ export function idleWhisper(g: Garden, views: Record<string, MemoryView>): strin
     .sort((a, b) => a.vitality - b.vitality)[0];
   if (!faintest) return null;
   const holder = holderOf(g, views, faintest.id);
-  return `${nameOf(g.memories[faintest.id])} is drifting into fog.${holder ? ` ${holder.line}` : ''}`;
+  return `${spokenName(g.memories[faintest.id])} is drifting into fog.${holder ? ` ${holder.line}` : ''}`;
 }
 
 /** The whisper on return, after time has passed: "Four days passed. The library rooftop is about to be lost." */
@@ -71,13 +92,13 @@ export function returnWhisper(g: Garden, views: Record<string, MemoryView>, s: R
   const lost = s.lost.find((id) => g.memories[id]);
   const faded = s.faded.find((id) => g.memories[id]);
   if (about) {
-    parts.push(`${nameOf(g.memories[about])} is about to be lost.`);
+    parts.push(`${spokenName(g.memories[about])} is about to be lost.`);
     const h = holderOf(g, views, about);
     if (h) parts.push(h.line);
   } else if (lost) {
-    parts.push(`${nameOf(g.memories[lost])} drifted into the fog.`);
+    parts.push(`${spokenName(g.memories[lost])} drifted into the fog.`);
   } else if (faded) {
-    parts.push(`${nameOf(g.memories[faded])} is drifting into fog.`);
+    parts.push(`${spokenName(g.memories[faded])} is drifting into fog.`);
     const h = holderOf(g, views, faded);
     if (h) parts.push(h.line);
   }
