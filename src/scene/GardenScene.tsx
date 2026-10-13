@@ -9,6 +9,7 @@ import { Flower } from './flower/Flower';
 import { FogBanks } from './fog/FogBanks';
 import { Ground } from './ground/Ground';
 import { DraftSeed, EmptyGardenSeed } from './plant/DraftSeed';
+import { Pollen } from './fx/Pollen';
 import { ScreenProjector } from './ScreenProjector';
 import { ShaderWarmup } from './ShaderWarmup';
 import { RIPPLE_TRAVEL_MS } from './thread/ThreadArc';
@@ -43,6 +44,7 @@ export function GardenScene() {
       <Ground />
       <Flowers />
       <Threads />
+      <Pollen />
       <DraftSeed />
       <EmptyGardenSeed />
       <FogBanks />

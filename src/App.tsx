@@ -10,7 +10,7 @@ import { preloadOfflineTagger } from './tagging/offline';
 import { Button, LightCounter } from './ui/ds';
 import { FirstPlantings } from './ui/FirstPlantings';
 import { FlowerTargets } from './ui/FlowerTargets';
-import { GardenWhisper } from './ui/GardenWhisper';
+import { FilmTitle, GardenWhisper } from './ui/GardenWhisper';
 import { PlantButton, PlantOverlay } from './ui/PlantOverlay';
 import { FocusRecollection, HoverRecollection } from './ui/Recollections';
 import { Reveal, RevealEntry } from './ui/Reveal';
@@ -51,6 +51,7 @@ export function App() {
       {inGarden && !revealing && !settling && <PlantButton />}
       <PlantOverlay />
       <GardenWhisper />
+      <FilmTitle />
       {inGarden && <EpisodeControls />}
       <TendMote />
       {inGarden && <Reveal />}

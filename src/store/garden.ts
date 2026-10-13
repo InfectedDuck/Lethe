@@ -140,7 +140,8 @@ type GardenStore = {
   /** The settings overlay (P10.2), opened from "lethe" top-left. */
   settings: boolean;
   /** "watch a season" (D20): the garden plays its own story, and says one line at a time beneath it. */
-  story: { running: boolean; line: string | null };
+  /** The film: whether it plays, its caption, and a title card in the sky for its turning points. */
+  story: { running: boolean; line: string | null; title?: string | null };
   draft: Draft | null;
 
   now: () => number;
@@ -279,7 +280,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     seasonTimer = null;
     draftRequest?.abort();
     set({ generation: get().generation + 1, episode: null, plantingPending: false,
-      story: { running: false, line: null }, presentation: { ...NO_PRESENTATION } });
+      story: { running: false, line: null, title: null }, presentation: { ...NO_PRESENTATION } });
   };
   const emit = (type: GardenStore['events'][number]['type'], ids: string[], at: (id: string) => number = () => performance.now()) =>
     set((s) => ({ events: [...s.events.filter((e) => performance.now() - e.at < 8000), ...ids.map((id) => ({ type, id, at: at(id) }))] }));
@@ -455,7 +456,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     stopPresentation: () => {
       const e = get().episode;
       if (e?.stage === 'reflecting') stopEpisodeTimer();
-      set({ presentation: { ...NO_PRESENTATION }, story: { running: false, line: null },
+      set({ presentation: { ...NO_PRESENTATION }, story: { running: false, line: null, title: null },
         episode: e ? { ...e, mode: 'play', stage: e.stage === 'reflecting' ? 'finished' : e.stage } : null });
       if (e?.stage === 'passing' && !get().replaying) get().finishEpisode();
     },
@@ -478,7 +479,7 @@ export const useGarden = create<GardenStore>((set, get) => {
     whisperOverride: null,
     reveal: { open: false, entityId: null },
     settings: false,
-    story: { running: false, line: null },
+    story: { running: false, line: null, title: null },
     draft: null,
 
     now: () => {
