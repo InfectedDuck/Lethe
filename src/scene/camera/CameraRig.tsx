@@ -123,17 +123,18 @@ export function CameraRig() {
     const dist = camera.position.distanceTo(c.target);
     c.maxPolarAngle = THREE.MathUtils.lerp(NEAR.maxPolar, FAR.maxPolar, THREE.MathUtils.smoothstep(dist, NEAR.dist, FAR.dist));
 
-    const { focusedId, garden } = useGarden.getState();
-    const revealing = useGarden.getState().reveal.open;
+    const { focusedId: selectedId, garden, presentation, shown } = useGarden.getState();
+    const focusedId = presentation.headId ?? selectedId;
+    const revealing = useGarden.getState().reveal.open || presentation.overview;
     const hadGoal = !!focus.current.id || reveal.current.open;
     // Re-frame when the focus changes, or when the open memory is lost or returned (seed ↔ flower).
-    const focusedLost = focusedId ? garden.memories[focusedId]?.lost : undefined;
+    const focusedLost = focusedId ? presentation.headId === focusedId ? false : shown[focusedId]?.state === 'lost' : undefined;
     const reframed = focusedId !== focus.current.id || focusedLost !== focus.current.lost;
     if (reframed) {
       const m = focusedId ? garden.memories[focusedId] : null;
       const L = focusedId ? layout[focusedId] : null;
       // A lost memory is only its dark seed: come close to the seed on the ground.
-      const point = m && L ? (m.lost ? baseToWorld(L.x, L.y).setY(0.35) : flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y))) : undefined;
+      const point = m && L ? (focusedLost ? baseToWorld(L.x, L.y).setY(0.35) : flowerHead(m.kind, m.id, L.size, baseToWorld(L.x, L.y))) : undefined;
       const target = point?.add(FOCUS_LOOK_SHIFT);
       focus.current = { id: focusedId, lost: focusedLost, overridden: false, target, pos: target?.clone().add(FOCUS_OFFSET) };
     }
@@ -196,7 +197,8 @@ export function CameraRig() {
       goal = { pos: focus.current.pos, target: focus.current.target };
     } else if (returning.current) goal = returning.current;
     if (goal) {
-      const k = damp(hasGoal ? 1.2 : 1.0, step);
+      // Reduced motion: no cinematic glides, the camera cuts to its goal.
+      const k = reduced ? 1 : damp(hasGoal ? 1.2 : 1.0, step);
       camera.position.lerp(goal.pos, k);
       c.target.lerp(goal.target, k);
       if (goal === returning.current && camera.position.distanceTo(goal.pos) < ARRIVED && c.target.distanceTo(goal.target) < ARRIVED) {
