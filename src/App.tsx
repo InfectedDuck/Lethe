@@ -20,6 +20,7 @@ import { SoundToggle } from './ui/SoundToggle';
 import { TendMote } from './ui/TendMote';
 import { Threshold } from './ui/Threshold';
 import { useGardenKeys } from './ui/useGardenKeys';
+import { EpisodeControls } from './ui/EpisodeControls';
 
 export function App() {
   // Fetch the offline tagger's NLP library in the background, so the first planting never waits for it.
@@ -50,6 +51,7 @@ export function App() {
       {inGarden && !revealing && !settling && <PlantButton />}
       <PlantOverlay />
       <GardenWhisper />
+      {inGarden && <EpisodeControls />}
       <TendMote />
       {inGarden && <Reveal />}
       {inGarden && <Settings />}
@@ -72,13 +74,14 @@ function Light() {
 function TimeSlider() {
   const [open, setOpen] = useState(false);
   const offset = useGarden((s) => s.clock.debugOffset);
+  const episode = useGarden((s) => s.episode);
   const { setDebugOffset, arrive, resetDemo } = useGarden.getState();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === '`') setOpen((o) => !o); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  if (!open) return null;
+  if (!open || episode) return null;
   return (
     <div className="time-slider interface-sm">
       <label>

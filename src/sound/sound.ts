@@ -190,6 +190,7 @@ function build(Tone: Tone) {
 
   follow(useGarden.getState().shown);
   useGarden.subscribe((s, prev) => {
+    if (s.presentation.quiet !== prev.presentation.quiet) drone.gain.rampTo(Tone.dbToGain(LEVEL.drone) * (s.presentation.quiet ? 0.45 : 1), 2);
     if (s.shown !== prev.shown) follow(s.shown);
     if (s.hoveredId && s.hoveredId !== prev.hoveredId) hover(s.hoveredId);
 
