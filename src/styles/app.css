@@ -1,0 +1,125 @@
+/* App layout only. Colours, type and components come from the design system. */
+html, body, #root { height: 100%; overflow: hidden; }
+.stage { position: fixed; inset: 0; background: var(--night); }
+.stage canvas { display: block; }
+
+/* Edge interface: space-4 from the edges, rests at ui-idle, wakes on hover or focus. */
+.edge { position: absolute; opacity: var(--ui-idle); transition: opacity .4s ease; }
+.edge:hover, .edge:focus-within { opacity: 1; }
+.top-left { top: var(--space-4); left: var(--space-4); }
+.top-right { top: var(--space-4); right: var(--space-4); }
+.bottom-left { bottom: var(--space-4); left: var(--space-4); }
+.bottom-right { bottom: var(--space-4); right: var(--space-4); }
+.bottom-center { bottom: var(--space-4); left: 50%; transform: translateX(-50%); opacity: 1; max-width: 640px; }
+
+/* Recollections: hover follows its flower (positioned from script); focus sits on the right half (screen p2). */
+.hover-recollection { position: absolute; top: 0; left: 0; pointer-events: none; will-change: transform; }
+.focus-recollection { position: absolute; top: 50%; left: 54%; transform: translateY(-50%); max-width: 520px; }
+/* Words surface slowly, like everything in the garden (interface wakes in 0.4s). */
+.surface { animation: surface .6s ease both; }
+@keyframes surface { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: none; } }
+
+/* Keyboard access to flowers: invisible until focused, then the design system's focus ring around the flower. */
+.flower-targets { position: absolute; inset: 0; pointer-events: none; }
+.flower-target { position: absolute; top: 0; left: 0; padding: 0; border: 0; background: none; border-radius: var(--radius-pill);
+  pointer-events: none; visibility: hidden; }
+
+/* Light spent on tending: a dot dims slowly (0.6s) while a matching mote travels to the flower. */
+.light-counter .lt-light-dot { transition: background-color .6s ease, box-shadow .6s ease, opacity .6s ease, border-color .6s ease; }
+.mote-layer { position: absolute; inset: 0; pointer-events: none; }
+.tend-mote { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: var(--radius-pill);
+  background: var(--light); box-shadow: var(--glow-light), 0 0 18px rgba(255, 217, 160, 0.5); }
+
+/* Planting (screens p4–p6): one overlay, floating low in the middle of the garden. */
+.plant-overlay { position: absolute; left: 50%; bottom: 72px; transform: translateX(-50%); width: min(580px, calc(100vw - 48px)); }
+.plant-overlay .lt-overlay-actions { justify-content: flex-end; }
+.plant-note { color: var(--fog); margin-right: auto; }
+.kind-choices { display: flex; justify-content: space-around; gap: var(--space-3); padding: var(--space-3) 0 var(--space-2); }
+.kind-choice { appearance: none; background: none; border: 0; cursor: pointer; color: var(--fog); display: grid; justify-items: center;
+  gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-overlay); transition: color .4s ease; }
+.kind-choice:hover, .kind-choice:focus-visible { color: var(--text-primary); }
+.kind-seed { width: 38px; height: 38px; border-radius: var(--radius-pill); position: relative;
+  background: radial-gradient(circle, color-mix(in oklab, var(--lt-hue) 22%, transparent), transparent 70%); }
+.kind-seed::after { content: ''; position: absolute; inset: 11px 15px; border-radius: 50%; background: var(--lt-hue);
+  box-shadow: 0 0 12px var(--lt-hue); opacity: .85; }
+.plant-input { display: block; width: 100%; box-sizing: border-box; margin: var(--space-3) 0 var(--space-2); padding: var(--space-1) 0 var(--space-2);
+  resize: none; overflow: hidden; font: inherit; font-family: var(--font-display); font-size: 32px; line-height: 40px;
+  background: none; border: 0; border-bottom: 1px solid color-mix(in oklab, var(--fog) 60%, transparent); outline: none; color: var(--text-primary); }
+.plant-input::placeholder { color: var(--fog); font-style: italic; }
+.plant-input:focus-visible { outline: none; border-bottom-color: var(--text-primary); }
+.plant-threads { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.plant-threads > .interface-sm { color: var(--fog); }
+.plant-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.plant-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: 4px 6px 4px 14px; color: var(--text-primary);
+  border: 1px solid color-mix(in oklab, var(--fog) 55%, transparent); border-radius: var(--radius-pill); }
+.plant-chip-x { appearance: none; background: none; border: 0; color: var(--fog); cursor: pointer; padding: 0 6px; font: inherit; border-radius: var(--radius-pill); }
+.plant-chip-x:hover, .plant-chip-x:focus-visible { color: var(--text-primary); }
+.photo-pick { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); }
+.photo-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius-hair); }
+
+/* The threshold (screen p7): the whole screen is the way in. */
+.threshold { position: absolute; inset: 0; z-index: 10; background: radial-gradient(ellipse 60% 45% at 50% 46%, #11151d 0%, var(--night) 70%);
+  transition: opacity 1.2s ease; }
+.threshold.is-leaving { opacity: 0; pointer-events: none; }
+.threshold-enter { appearance: none; border: 0; background: none; cursor: pointer; position: absolute; inset: 0; width: 100%;
+  display: grid; place-content: center; justify-items: center; gap: var(--space-3); color: var(--text-primary); padding: 0 var(--space-4); }
+.threshold-enter:focus-visible { outline: none; }
+.threshold-enter:focus-visible .threshold-hint { color: var(--text-primary); }
+.threshold-seed { width: 16px; height: 30px; border-radius: 50%; background: var(--light); margin-bottom: var(--space-5);
+  box-shadow: 0 0 40px 22px rgba(255, 217, 160, 0.16), 0 0 90px 60px rgba(255, 217, 160, 0.06); animation: breathe 7s ease-in-out infinite; }
+@keyframes breathe { 50% { box-shadow: 0 0 46px 26px rgba(255, 217, 160, 0.2), 0 0 100px 66px rgba(255, 217, 160, 0.07); } }
+.threshold-line { text-align: center; text-shadow: var(--glow-text); }
+.threshold-hint { color: var(--fog); transition: color .4s ease; }
+.threshold-demo { position: absolute; left: 50%; bottom: var(--space-5); transform: translateX(-50%); display: flex; gap: var(--space-5); }
+
+/* First plantings (screens p8–p10): one card at a time, high on the screen, flowers growing below. */
+.prompt-card { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(540px, calc(100vw - 48px)); z-index: 5; }
+.prompt-title { margin: 0 0 var(--space-3); font-family: var(--font-display); font-weight: 400; font-size: 32px; line-height: 40px; color: var(--text-primary); }
+.prompt-input { display: block; width: 100%; box-sizing: border-box; resize: none; overflow: hidden; background: none; border: 0; outline: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--fog) 60%, transparent); color: var(--text-primary); padding: var(--space-1) 0 var(--space-2);
+  font-family: var(--font-display); font-size: 24px; line-height: 32px; }
+.prompt-input::placeholder { color: var(--fog); font-style: italic; }
+.prompt-input:focus-visible { border-bottom-color: var(--text-primary); }
+.prompt-footer { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); }
+.prompt-dots { display: inline-flex; gap: var(--space-2); margin-right: auto; }
+.prompt-dots .lt-light-dot.is-here { opacity: 1; border-color: var(--text-primary); }
+
+/* Top-left: the name, and the quiet way into the reveal. */
+.top-left-row { display: flex; align-items: center; gap: var(--space-3); }
+
+/* Settings (screen p13): one overlay under the name, the privacy note, then the two choices as words. */
+.settings-entry { padding: 0; }
+.settings-overlay { position: absolute; left: var(--space-4); top: 64px; width: min(440px, calc(100vw - 48px)); z-index: 5; }
+.settings-overlay .lt-overlay-actions { justify-content: flex-end; }
+.settings-note { margin: 0; color: var(--text-primary); max-width: 38ch; }
+.settings-choices { display: grid; justify-items: start; gap: var(--space-2); margin-top: var(--space-4); }
+
+/* The reveal (screen p12): a column of light on the left, no panel behind it; the garden glows to its right. */
+.reveal { position: absolute; left: 64px; top: 16%; bottom: var(--space-4); width: min(330px, 34vw); display: flex; flex-direction: column; z-index: 4; }
+.reveal-title { margin: 0 0 var(--space-4); color: var(--text-primary); }
+.reveal-empty { color: var(--fog); }
+.reveal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.reveal-holder { appearance: none; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: baseline;
+  gap: var(--space-2) var(--space-3); padding: 10px var(--space-3) 12px; background: none; border: 1px solid transparent;
+  border-radius: var(--radius-overlay); cursor: pointer; text-align: left; transition: background-color .6s ease, border-color .6s ease; }
+.reveal-holder.is-on { background: var(--overlay-fill); border-color: var(--overlay-border); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.reveal-name { font-family: var(--font-display); font-size: 24px; line-height: 30px; color: var(--text-primary); }
+.reveal-count { color: var(--fog); }
+.reveal-line { grid-column: 1 / -1; height: 2px; border-radius: var(--radius-pill); opacity: .45;
+  background: linear-gradient(90deg, var(--thread), color-mix(in oklab, var(--thread) 30%, transparent));
+  box-shadow: 0 0 6px rgba(255, 244, 224, 0.25); transition: opacity .6s ease; }
+.reveal-holder.is-on .reveal-line, .reveal-holder:hover .reveal-line { opacity: 1; }
+.reveal-back { margin-top: auto; align-self: flex-start; }
+.reveal-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reveal-label { position: absolute; top: 0; left: 0; color: var(--text-primary); white-space: nowrap; text-shadow: var(--glow-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .threshold-seed { animation: none; }
+  .surface { animation: none; }
+  .light-counter .lt-light-dot { transition: none; }
+}
+
+.time-slider { position: absolute; top: 64px; right: var(--space-4); display: grid; gap: var(--space-2); padding: var(--space-3);
+  background: var(--overlay-fill); backdrop-filter: blur(16px); border: 1px solid var(--overlay-border); border-radius: var(--radius-overlay); }
+.time-slider input { width: 240px; display: block; margin-top: var(--space-2); }
+.time-slider-actions { display: flex; gap: var(--space-3); align-items: center; }
