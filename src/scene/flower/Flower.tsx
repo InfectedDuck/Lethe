@@ -77,12 +77,16 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
   const lines = useRef<THREE.LineSegments>(null);
   const motes = useRef<THREE.Points>(null);
   const first = useRef(true);
+  /** Clock time this flower began to look like a ghost: its petals start to fall from then (null while alive). */
+  const ghostSince = useRef<number | null>(null);
   const droop = useRef(0);
   /** Glow and halo eased toward the state's targets; the tend swell is added on top each frame. */
   const lit = useRef({ glow: 0, halo: 0 });
   const reduced = useReducedMotion();
   const dpr = useThree((s) => s.viewport.dpr);
   const phase = useMemo(() => (hashSeed(seed) % 1000) / 1000 * Math.PI * 2, [seed]);
+  // Each ghost lets its first petal go after its own 4–12s, so no two fall in step.
+  useEffect(() => { uniforms.uFallFirst.value = 4 + (hashSeed(`fall:${seed}`) % 800) / 100; }, [uniforms, seed]);
 
   const styleOf = (st: MemoryState) => {
     const color = flowerColor(kind, st, hue);
@@ -128,6 +132,13 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
     // Dimming (focus, reveal) settles faster than a state change: ~1s.
     const wantOpacity = dim * born.opacity * dying.presence;
     u.uOpacity.value += (wantOpacity - u.uOpacity.value) * (first.current || born.opacity < 1 || lost ? 1 : damp(3, dt));
+
+    // Ghost petals fall one by one while the flower looks like a ghost, and stay fallen if it is lost; tended back
+    // to life, it is whole again. Reduced motion keeps every petal.
+    const ghostly = !reduced && (state === 'ghost' || lost);
+    if (!ghostly) ghostSince.current = null;
+    else if (ghostSince.current === null) ghostSince.current = clock.elapsedTime;
+    u.uFallT.value = ghostSince.current === null ? -1 : clock.elapsedTime - ghostSince.current;
 
     const time = reduced ? 0 : clock.elapsedTime;
     u.uTime.value = time;

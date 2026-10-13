@@ -23,7 +23,7 @@ const OCTAVE: Record<Kind, number> = { place: 3, sentence: 4, photo: 4, song: 5 
  * tend chime with its ripple −12, planting with a four-note chord −17, and a 21-day return with its losses stacked −17.
  * Nothing goes above −12 except the chime. The bell's FM voice comes out ~9 dB under its velocity, hence BELL_GAIN.
  */
-const LEVEL = { drone: -26, hover: -25, chime: -10, ripple: -22, chord: -20, lost: -24 };
+const LEVEL = { drone: -26, hover: -25, chime: -10, ripple: -22, chord: -20, lost: -24, landing: -28 };
 const BELL_GAIN = 9;
 /** A return can lose many memories at once; past this many bending at the same moment, the rest stay silent. */
 const LOST_VOICES = 3;
@@ -146,6 +146,11 @@ function build(Tone: Tone) {
     if (k) play(bell, [noteOf(n, k)], 0.6, LEVEL.ripple, at(tendMs) + (i + 1) * RIPPLE_GAP_S);
   });
 
+  const landing = (id: string, whenMs: number) => {
+    const kind = kindOf(id);
+    if (kind) play(soft, [noteOf(id, kind)], 0.35, LEVEL.landing, at(whenMs));
+  };
+
   // A new memory's threads (or a returned one's, re-forming): when the first light reaches the neighbours (P6.4),
   // its note and theirs sound together.
   const chord = (id: string, whenMs: number) => {
@@ -193,7 +198,9 @@ function build(Tone: Tone) {
       fresh.forEach((e) => heard.add(e));
       for (const e of fresh) {
         if (e.type === 'tend') chime(e.id, e.at);
-        if (e.type === 'bloom') chord(e.id, e.at + BLOOM_MS.settle + RIPPLE_TRAVEL_MS);
+        // The garden growing in: each flower's own note as its seed lands, a pentatonic cascade, never a pile of chords.
+        if (e.type === 'bloom' && e.quiet) landing(e.id, e.at + BLOOM_MS.land);
+        else if (e.type === 'bloom') chord(e.id, e.at + BLOOM_MS.settle + RIPPLE_TRAVEL_MS);
         if (e.type === 'dissolve') lost(e.id, e.at);
       }
       // The store sends the ripple just after its tend: the neighbours follow the latest chime.
