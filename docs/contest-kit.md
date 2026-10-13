@@ -23,7 +23,7 @@ Speak slowly. Sentences in *italics* are what you say; the rest is what you do. 
 | time | do | say |
 |---|---|---|
 | 0:00 | Opening screen: "Plant something you don’t want to lose." Hands off the mouse. | *Everything we build today promises that we will never forget. Every photo, every message, kept forever. But that is not how memory works. We forget, and what we keep says who we are. Lethe is a garden that forgets.* |
-| 0:25 | Click **see a garden** (bottom). Keep the mouse still: the rule appears at the bottom. | *Every flower here is one memory: a sentence someone said, a song, a place, a photograph. And there is only one rule.* (read it with the screen) *Memories that share someone, or somewhere, hold each other up.* |
+| 0:25 | Click **see a garden** (bottom). Keep the mouse still: as the screen fades, ten seeds wait in the dark, fall and grow into the garden (about 4s), and the rule appears at the bottom. | *Every flower here is one memory: a sentence someone said, a song, a place, a photograph. And there is only one rule.* (read it with the screen) *Memories that share someone, or somewhere, hold each other up.* |
 | 0:50 | Glide onto the yellow star on the left and rest. | *This is something a grandmother said: "You don’t have to be brave all the time." These lines of light are threads. Nobody drew them: they grew because three memories share Grandma Mei. Threads are what keep a memory from fading.* |
 | 1:15 | Click the star, then **tend**. | *Everything here fades with time. You can tend a memory, but you only get three lights a day. So tending is choosing.* (the ripple runs) *And look: the light doesn’t stay. It runs along the threads, to everything connected.* |
 | 1:40 | <kbd>Esc</kbd> → **+ plant** (bottom left) → **sentence** → type *Tea with Grandma Mei in Hangzhou.* → **plant**. Move the cursor to empty ground. | *Planting is writing one line. As I type, the garden notices who and where, Grandma Mei and Hangzhou, and offers the threads it could join.* (plant) *It grows... and it joins her.* |
@@ -153,7 +153,7 @@ Numbers are allowed here, never in the interface. Speak slowly; leave the quiet 
 - **+ plant** (or <kbd>N</kbd>): write a memory that names someone already there, such as Grandma Mei or Leo.
 - Press <kbd>`</kbd> for the time slider: slide two weeks, then **arrive**, and watch the fog take what nothing holds.
 - **what holds you** (top left) shows the people and places your garden leans on.
-- Scroll to rise over the garden. <kbd>Esc</kbd> closes anything open.
+- Drag to turn, right-drag (or two fingers) to move over the garden, scroll toward the cursor to come close or rise above it. <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the arrow keys glide, <kbd>Q</kbd>/<kbd>E</kbd> turn, <kbd>Esc</kbd> closes anything open.
 
 **Notes:** Sound starts on your first click (headphones help). Desktop Chrome or Edge, a window 1440 × 900 or larger. Your own garden (click anywhere on the opening screen without `?demo`) stays in your browser only.
 

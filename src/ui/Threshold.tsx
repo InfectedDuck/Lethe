@@ -22,10 +22,12 @@ export function Threshold() {
 
   useEffect(() => {
     if (!leaving) return;
+    // The demo garden is reset at the click, so as the threshold fades its seeds are already waiting in the dark.
+    if (leaving !== 'own') useGarden.getState().prepareDemo(LEAVE_MS);
     const t = setTimeout(() => {
       if (leaving === 'own') void useGarden.getState().enterOwn();
-      else if (leaving === 'story') startStory();
-      else useGarden.getState().seeDemo();
+      else if (leaving === 'story') startStory({ prepared: true });
+      else useGarden.getState().openDemo();
     }, LEAVE_MS);
     return () => clearTimeout(t);
   }, [leaving]);

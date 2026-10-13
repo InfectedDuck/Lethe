@@ -10,6 +10,7 @@ import { FogBanks } from './fog/FogBanks';
 import { Ground } from './ground/Ground';
 import { DraftSeed, EmptyGardenSeed } from './plant/DraftSeed';
 import { ScreenProjector } from './ScreenProjector';
+import { ShaderWarmup } from './ShaderWarmup';
 import { RIPPLE_TRAVEL_MS } from './thread/ThreadArc';
 import { baseToWorld } from './layout';
 import { Threads } from './thread/Threads';
@@ -42,6 +43,7 @@ export function GardenScene() {
       <EmptyGardenSeed />
       <FogBanks />
       <Effects />
+      <ShaderWarmup />
     </Canvas>
   );
 }

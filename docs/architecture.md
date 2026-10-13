@@ -157,7 +157,7 @@ sequenceDiagram
   F->>C: strict JSON schema (structured output)
   C-->>F: {people, places, feelings}
   F-->>T: JSON + x-lethe-tagger
-  Note over T,O: 503 / 429 / error / slower than 2.5s → offline tags instead
+  Note over T,O: 503 / 429 / error / slower than 4s → offline tags instead
   T-->>S: tags
   S->>E: suggestThreads(draft)
   S-->>G: dashed suggested threads

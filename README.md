@@ -49,7 +49,7 @@ A tagging service is an optional upgrade, set server-side only (`.env` locally, 
 | `GROQ_API_KEY` | Groq, `openai/gpt-oss-20b` | free tier, from [console.groq.com/keys](https://console.groq.com/keys) |
 | `ANTHROPIC_API_KEY` | Claude, `claude-haiku-5-5` | used instead of Groq when both are set |
 
-Planting never waits for the service: the flower grows with offline tags, and better tags replace them if the service answers within 2.5s. After a "no key" reply the app stops asking; after a rate limit it waits a few minutes.
+Planting never waits for the service: the flower grows with offline tags, and better tags replace them if the service answers within 4s. After a "no key" reply the app stops asking; after a rate limit it waits a few minutes.
 
 ```
 cp .env.example .env      # optional: add GROQ_API_KEY or ANTHROPIC_API_KEY

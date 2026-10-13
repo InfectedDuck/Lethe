@@ -35,13 +35,16 @@ const wait = (ms: number, signal: AbortSignal) => new Promise<void>((resolve, re
 
 export const storyRunning = () => run !== null;
 
-/** Begin the story on the demo garden, from its first day. */
-export function startStory() {
+/**
+ * Begin the story on the demo garden, from its first day. From the threshold the garden has already been prepared
+ * (it grows in as the threshold fades), so it is only opened, not reset again.
+ */
+export function startStory({ prepared = false } = {}) {
   stopStory();
   const ctrl = (run = new AbortController());
   const s = useGarden.getState;
   const line = (l: string | null) => s().setStory({ line: l });
-  s().seeDemo();
+  if (prepared) s().openDemo(); else s().seeDemo();
   s().setStory({ running: true, line: null });
   // A click anywhere (except the story's own word, which stops it itself) or any key hands the garden back.
   const interrupt = (e: Event) => { if (!(e.target instanceof Element && e.target.closest('.story-entry'))) stopStory(); };

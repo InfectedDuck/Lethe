@@ -113,7 +113,17 @@ html, body, #root { height: 100%; overflow: hidden; }
 .reveal-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .reveal-label { position: absolute; top: 0; left: 0; color: var(--text-primary); white-space: nowrap; text-shadow: var(--glow-text); }
 
+/* Words falling away (D21): a forgotten word sinks out of its gap and fades; then only the dotted gap remains. */
+.lt-recollection .lt-gap { position: relative; }
+.word-leaving { position: absolute; left: 0; bottom: 0; white-space: nowrap; pointer-events: none; opacity: 0;
+  animation: word-leaving 2.8s cubic-bezier(.4, 0, .7, 1) both; }
+@keyframes word-leaving {
+  0% { opacity: 1; transform: none; filter: blur(0); }
+  100% { opacity: 0; transform: translateY(.55em); filter: blur(3px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .word-leaving { display: none; }
   .threshold-seed { animation: none; }
   .surface { animation: none; }
   .light-counter .lt-light-dot { transition: none; }

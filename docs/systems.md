@@ -95,7 +95,7 @@ Song memories skip their "title, artist." part, so the composer is never a perso
 | 429 | provider rate limit | keep offline tags; don't ask again for 3 minutes, or the `retry-after`, whichever is longer |
 | 502 | provider error, or a reply in the wrong shape | keep offline tags; ask again next time |
 | 503 | no key configured | keep offline tags; don't ask again this session |
-| 504, or no reply in 2.5s | slow | keep offline tags; ask again next time |
+| 504, or no reply in 4s | slow | keep offline tags; ask again next time |
 
 ## Sound (Tone.js), mapped to events
 

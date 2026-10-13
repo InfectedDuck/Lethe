@@ -16,6 +16,7 @@ import { offlineTag } from '../tagging/offline';
 import { apiTag, type TagSource } from '../tagging/tag';
 import { dominantColor } from '../ui/photo';
 import { ALONE_WHISPER, RULE_WHISPER } from '../ui/whispers';
+import { sceneReady } from './sceneReady';
 import { forget, keep, load, markKept } from './persist';
 
 type Clock = { debugOffset: number };
@@ -60,7 +61,8 @@ type GardenStore = {
   /** Which tagger tagged each memory planted this session (for checking the providers on the live site). */
   tagSources: Record<string, TagSource>;
   /** Ids that just bloomed or were tended, for one-shot animations. */
-  events: { type: 'bloom' | 'tend' | 'ripple' | 'dissolve' | 'beckon'; id: string; at: number }[];
+  /** `quiet`: the garden growing in on entry (no new-thread chord; each flower sounds its note as it lands). */
+  events: { type: 'bloom' | 'tend' | 'ripple' | 'dissolve' | 'beckon'; id: string; at: number; quiet?: boolean }[];
   planting: PlantingStep;
   phase: Phase;
   /** Whose garden is on screen: your own (kept in this browser) or the demo garden (never kept). */
@@ -97,6 +99,12 @@ type GardenStore = {
   beginOwn: () => void;
   /** Threshold: see the demo garden (the ten sample memories). */
   seeDemo: () => void;
+  /**
+   * Threshold, at the click: reset the demo garden while the threshold is still fading, its seeds waiting in the
+   * dark until `afterMs` has passed. `openDemo` then opens it without resetting it again.
+   */
+  prepareDemo: (afterMs: number) => void;
+  openDemo: () => void;
   /** First plantings: plant the current prompt's memory, or skip it. */
   plantPrompt: (text: string, photo?: File) => Promise<void>;
   skipPrompt: () => void;
@@ -142,6 +150,15 @@ let sayTimer: ReturnType<typeof setTimeout> | null = null;
 /** The rule is said when the demo garden opens; a memory planted alone hears it once its bloom has settled. */
 const RULE_FOR_MS = 7000;
 const ALONE_AFTER_MS = 2400;
+/**
+ * Entering the demo garden, it grows in: each seed falls and blooms, left to right, 160ms apart (the bloom's own
+ * beats), and the threads light once both their flowers have grown. On a ?demo link the wait is longer, so the
+ * first frame has been drawn before the first seed falls.
+ */
+const GROW_IN_AFTER_MS = 450;
+/** A ?demo link grows in once the scene's shaders are compiled, and never waits longer than this. */
+const SCENE_READY_MAX_MS = 4000;
+const GROW_IN_STAGGER_MS = 160;
 const isDemoLink = typeof location !== 'undefined' && /[?&]demo\b/.test(location.search);
 let nextId = 0;
 const newId = (prefix = 'm') => `${prefix}${Date.now().toString(36)}${(nextId++).toString(36)}`;
@@ -222,8 +239,23 @@ export const useGarden = create<GardenStore>((set, get) => {
     if (saying && get().whisperOverride === saying) set({ whisperOverride: null });
     saying = null;
   };
-  // A judge's link (?demo) opens on the rule, before anything else is said.
-  if (isDemoLink) setTimeout(() => say(RULE_WHISPER), 0);
+  // A judge's link (?demo) grows the garden in and opens on the rule, before anything else is said. Its seeds wait
+  // in the dark while the scene compiles its shaders (sceneReady), so the first bloom never stutters.
+  if (isDemoLink) {
+    setTimeout(() => {
+      growIn(SCENE_READY_MAX_MS);
+      void Promise.race([sceneReady, new Promise((r) => setTimeout(r, SCENE_READY_MAX_MS))])
+        .then(() => { growIn(GROW_IN_AFTER_MS); say(RULE_WHISPER); });
+    }, 0);
+  }
+  /** The garden grows in: one quiet bloom per memory, left to right across the canvas. */
+  const growIn = (afterMs: number) => {
+    const ids = Object.keys(get().garden.memories);
+    const layout = layoutOf(ids, get().positions);
+    const order = [...ids].sort((a, b) => layout[a].x - layout[b].x);
+    const t0 = performance.now() + afterMs;
+    set({ events: order.map((id, i) => ({ type: 'bloom' as const, id, at: t0 + i * GROW_IN_STAGGER_MS, quiet: true })) });
+  };
   const setDraft = (patch: Partial<Draft>) => set((s) => (s.draft ? { draft: { ...s.draft, ...patch } } : {}));
 
   const initialViews = viewAll(initial, 100 + urlDays);
@@ -342,11 +374,14 @@ export const useGarden = create<GardenStore>((set, get) => {
         clock: { debugOffset: 0 }, returnSummary: null, hoveredId: null, focusedId: null, planting: 'closed', draft: null,
         whisperOverride: null, reveal: { open: false, entityId: null }, owner: 'demo', settings: false,
       });
+      growIn(GROW_IN_AFTER_MS);
     },
 
     /* ---------- the threshold and the first plantings (P8) ---------- */
 
-    seeDemo: () => { get().resetDemo(); set({ phase: 'garden' }); say(RULE_WHISPER); },
+    seeDemo: () => { get().resetDemo(); get().openDemo(); },
+    prepareDemo: (afterMs) => { get().resetDemo(); growIn(afterMs + GROW_IN_AFTER_MS); },
+    openDemo: () => { set({ phase: 'garden' }); say(RULE_WHISPER); },
 
     // Coming back: the garden as it was left, then the time away, played as the return replay (P7.1).
     enterOwn: async () => {
