@@ -12,18 +12,19 @@ The plan is ordered so that **a demoable garden exists at every point after Mond
 |---|---|---|---|---|
 | P0 | Setup: repo, deps, docs, CLAUDE.md | must | — | ✅ done |
 | P1 | Garden engine + tests + simulation | must | — | ✅ done (16 tests, sim tuned) |
-| P2 | Scene look: fog, ground, camera, post | must | 1.5h | 🟨 done except P2.1 deploy (needs your Vercel login) |
-| P3 | **Flowers**: procedural Bloom in 3D, 4 kinds × 4 states | must | 3.5h | ✅ done (ghost petals falling → P7) |
+| P2 | Scene look: fog, ground, camera, post | must | 1.5h | ✅ done (deployed at https://lethe-nine.vercel.app) |
+| P3 | **Flowers**: procedural Bloom in 3D, 4 kinds × 4 states | must | 3.5h | ✅ done, except ghost petals falling one by one (scene-spec § Flowers): deferred to P7, never built |
 | P4 | Threads: arcs, pulse, motes, hover | must | 1h | ✅ done |
 | P5 | Interaction: hover, focus, tend, ripple, whispers | must | 2h | ✅ done |
 | P6 | Planting: overlay, tagging, suggested threads, **the bloom** | must | 2.5h | ✅ done |
-| P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ✅ built (not committed; commits and tests by autocode) |
+| P7 | Time: return replay, **the dissolve**, dark seed, return | must | 2h | ✅ done and committed (b9a81ac, tests 82f5b3a, 34a3137) |
 | — | **cut line: below here is optional if behind** | | | |
-| P8 | Threshold + first plantings + "a season passes" | should | 1h | ✅ built (handoff to Spark) |
-| P9 | Reveal: "what holds you" | should | 1h | ✅ built (handoff to Spark) |
-| P10 | Persistence (Dexie) + settings (export, let the garden go) | should | 1h | ⬜ |
-| P11 | Sound (Tone.js) | could | 1h | ⬜ |
-| P12 | Ship: perf, deploy, demo script, look log | must | 1.5h | ⬜ (deploy early in P2) |
+| P8 | Threshold + first plantings + "a season passes" | should | 1h | ✅ done and committed (5abcba6) |
+| P9 | Reveal: "what holds you" | should | 1h | ✅ done and committed (8f9dbda, tests 838cd31), except entering by scrolling out (left out on purpose, see P9) |
+| P10 | Persistence (Dexie) + settings (export, let the garden go) | should | 1h | ✅ done and committed (ca9c142, tests 02bd5e8) |
+| P11 | Sound (Tone.js) | could | 1h | ✅ done (not yet heard on speakers: P13 B3) |
+| P12 | Ship: perf, deploy, demo script, look log | must | 1.5h | ✅ done (P12.1a–c open, not needed) |
+| P13 | Launch: perf check, look freeze, rule whisper, killer still, kit | must | — | 🟨 deployed and frozen; owner: listen (B3), record (B2/B4) |
 
 ```mermaid
 gantt
@@ -59,7 +60,7 @@ gantt
 
 **Goal:** the empty stage already feels like the screens: night, fog and depth. *Look ref:* screens p3 (garden, no UI) and p14 (empty garden).
 
-- [ ] **P2.1 Deploy first (20m).** `npx vercel` → link → (optional) set `GROQ_API_KEY` in project env → deploy. Check that `/api/tag` returns 200 in production. *Done when:* you have a live URL. (De-risks P12.)
+- [x] **P2.1 Deploy first (20m).** `npx vercel` → link → (optional) set `GROQ_API_KEY` in project env → deploy. Check that `/api/tag` returns 200 in production. *Done when:* you have a live URL. (De-risks P12.) *Done:* https://lethe-nine.vercel.app, `/api/tag` 200 with Groq (see P12.3).
 - [x] **P2.2 Fog banks (40m).** `src/scene/fog/FogBanks.tsx`: 8 camera-facing planes with an fbm noise `ShaderMaterial` in `fog`, opacity 0.06, drifting on 40–90s loops; extra banks at opacity 0.14 in front of ghost flowers. Uniform `uDensity` from the share of faded memories. *Done when:* fog visibly drifts and is thicker over m9 and m10.
 - [x] **P2.3 Ground + camera (20m).** Soft radial lighten under each cluster (one shader plane). drei `OrbitControls` with the limits in scene-spec (azimuth ±25°, polar 55–85°, distance 4–16, no pan), damping on, and the drift resuming after 5s idle. Scroll out → overview.
 - [x] **P2.4 Post + quality (10m).** Wrap the composer in drei `PerformanceMonitor`; on decline, drop to low quality (scene-spec § Post-processing).
@@ -118,6 +119,8 @@ gantt
 - [x] **P7.4 Neglected-garden check (15m).** Slide +28 days → the garden should look like screen p16: mostly outlines and fog, with a few connected memories still glowing.
 - **Gate:** the demo story works: open → hover → tend Leo → slide 2 weeks → arrive → the rooftop dissolves → return it. *Checked in screenshots* (look log 20261012-2000-*): after 21 days the Dad pair, the rooftop and Satie dissolve to seeds and particles and their threads go out; letting go of one memory dissolves it and its thread; +28 days previews a garden like p16. Sandbox: `?sandbox=dissolve`. Not committed and no tests written for P7, as asked: autocode handles both.
 
+- *Audit 13 Oct:* every P7 task is built and committed. The dissolve lives in the flower shaders (`uDetach`, `uScatter`), `src/scene/fx/dissolveTimeline.ts` and `DarkSeed.tsx` rather than a `Dissolve.tsx`; the beckon is a 2s halo swell rather than 1.5s. **Not built:** ghost petals falling one by one (scene-spec § Flowers: one petal every ~20s until 40% have fallen, seeded). P3 deferred it here, but no P7 task carried it. It needs a per-petal id in the merged petal mesh (the same gap that keeps the bloom's petals opening together instead of 40ms apart).
+
 ---
 
 ## ✂ Cut line. Everything above makes a complete demo.
@@ -167,9 +170,12 @@ gantt
   - [ ] **P12.1b Fog cost (15m).** The thin banks run 5-octave fbm per pixel with ~3× overdraw (`src/scene/fog/FogBanks.tsx`, `src/scene/shaders/noise.ts`). Give thin banks a 3-octave path (memory banks keep 5), and try 8 → 5 thin banks against the p3 look-log frame. *Done when:* the p3 screenshot still matches and `?quality=low` is no longer needed on the test laptop.
   - [ ] **P12.1c Caches + gate (5m).** Re-renders are cheap only because `generateFlower` is string-key cached (`src/scene/flower/generator.ts:111-117`) and `flowerGeometry` hits on identity (`src/scene/flower/geometry.ts:27-33`): never build geometry in render, never break the cache keys, and dispose geometries on unmount (materials dispose today, geometries don't). Pin the identity with a test. Then `?stress=200` → 60fps on a laptop. *Done when:* the gate passes and the test is green.
   - *Do not:* merge flower geometries (seeds differ; the caches already make rebuilds free), `frameloop="demand"` (the garden always breathes), or chase draw calls at demo scale.
-- [ ] **P12.2 Demo script (20m).** Write the 90-second demo path in README (below) and rehearse it twice.
-- [ ] **P12.3 Final deploy + check (20m).** Check production: tagging works, the no-key fallback works, there are no console errors, and fonts load.
-- [ ] **P12.4 Look log + README screenshots (20m).**
+- [x] **P12.2 Demo script (20m).** Write the 90-second demo path in README (below) and rehearse it twice.
+- *Built (P12.2):* README § The 90-second demo, with times, what to do and what the garden does. *Rehearsed twice* in headless Edge with real mouse events, from the threshold to the reveal, with no console errors: hover m1 lights its threads; tend spends a light; planting the osmanthus sentence suggests Grandma Mei and Hangzhou (offline) and grows an 11th flower; +14 days → arrive loses m9 and m10 to dark seeds; the m10 seed → return brings it back as a ghost; the reveal lists Grandma Mei first (four memories). Found and fixed on the way: the return whisper said "We’ll figure it out is about to be lost." `spokenName` in `src/ui/whispers.ts` now keeps someone's words in quotation marks and quotes short sayings whole ("“We’ll figure it out” is about to be lost."); `nameOf` is unchanged. **For Spark:** `src/ui/whisper-edges.test.ts` line 37 pinned the old phrasing and now expects '“You don’t have to be brave” is drifting into fog.'. **Polish noted:** in the reveal, two labels overlap near the top-left flower ("Osmanthus tea…" over "You don’t have…"), and "A faint thread to Leo and me still holds it" reads oddly (the photo's name cut). Look log: 20261013-0230-p12-demo-*.
+- [x] **P12.3 Final deploy + check (20m).** Check production: tagging works, the no-key fallback works, there are no console errors, and fonts load.
+- *Built (P12.3):* deployed to production at the owner's request (`lethe-9o51gpels…`, aliased to https://lethe-nine.vercel.app). **Checked on the new production build:** the full demo path works in headless Edge with no console errors; the whisper reads "Two days passed. “We’ll figure it out” is about to be lost. A faint thread to Dad’s handwriting still holds it."; planting the osmanthus sentence suggests Grandma Mei, Grandma Mei's balcony and Hangzhou; fonts load; Groq answers in 0.9–1.2s and now keeps the city (4 of 4 tries: balcony/kitchen and Hangzhou) and returns ids exactly as listed. Before the deploy: added `.vercelignore` (`.env*` except `.env.example`), so a CLI deploy can never upload local keys; `npm run build` passes; preview `lethe-b2jm72941…` deployed (behind Vercel login), and its `/api/tag` answers **503 tagging unavailable** with no key, which is the no-key fallback path. **Live site (the build before P12.1):** the full demo path works in headless Edge with no console errors; Cormorant Garamond 300/400/400 italic and Inter 400 load; Groq tags in 0.8–1.8s. Fixed in `server/tag.ts`: Groq sometimes dropped the city ("her balcony in Hangzhou" → only "Grandma Mei's balcony", so the memory lost its Hangzhou thread) and returned ids without their prefix (harmless: name matching catches it). The prompt now asks for both the small place and its city, and for ids exactly as listed. (Not testable locally: the `.env.local` keys are empty.)
+- [x] **P12.4 Look log + README screenshots (20m).**
+- *Built (P12.4):* twelve final shots, `docs/look-log/20261013-0300-p12-final-01…12-*.png`, taken from the current build (the one the P12.3 deploy will ship) in headless Edge on the real GPU (D3D11, `?quality=high`, 1440 × 900) by driving the demo path with real mouse events: threshold, first plantings, garden, hover, tend ripple, planting with suggested threads, bloom, first thread, return replay with its whisper, two weeks later, dark seed, reveal. No console errors. README: a hero image (hover over Grandma Mei's sentence) and a "Screens" grid of eight with one-line captions; every image link checked. The reveal shot still shows the label overlap noted in P12.2.
 
 ### The 90-second demo path
 
@@ -180,6 +186,25 @@ gantt
 5. <kbd>`</kbd> → slide two weeks → **arrive** → fog rolls in, the library rooftop dissolves into a dark seed. The whisper names what still holds the rest.
 6. Click the dark seed → **return**.
 7. **what holds you** → Grandma Mei → the garden dims except her threads.
+
+## P13 · Launch (13–14 Oct)
+
+The owner's launch plan: lock performance, make the first minute stunning, make a stranger get the rule in 90 seconds, and post the listing. Everything for recording and the listing lives in [recording-kit.md](recording-kit.md). **Feature freeze:** no new effects, no look tuning after B1, no geometry merging.
+
+- [x] **A1 Demo-machine check.** Production build (`npm run build` + `vite preview`) at this laptop's real density: the screen is 2560 × 1600 at 150%, so DPR 1.5. Demo garden on the AMD Radeon 610M: 72–88 fps at 1707 × 960 (auto quality), 90–108 fps at 1440 × 900 (high); the slowest 5% of frames 20–50 ms. **Go.** Found: the laptop also has an **NVIDIA RTX 5060 Laptop GPU**, and Windows sets no GPU for Chrome or Edge, so browsers use the AMD chip; the kit says how to switch (§1).
+- [x] **A2 DPR + fog leftovers: skipped (gate passed).** P12.1a and P12.1b stay open and are not needed for the launch. P12.1a would hurt here: starting at DPR 1 and stepping up to 1.5 would visibly sharpen the picture mid-demo.
+- [x] **B1 Look freeze.** Compared the first garden view with screens p3 by region brightness: the fog band matched (26 vs 24.5); the floor did not (18 vs 30), because the ground was a flat `#0d1119` to the camera. Ground now lifts 5% toward `fog` (linear light) from z 0.5 to 6: floor 31.5 (28/32/38) vs p3 30 (27/30/39). Thread core colour `thread × (0.55 + 0.8·s)` (was × (0.6 + 1.2·s), white glare under bloom). Both in scene-spec. Frozen frame: `docs/look-log/20261013-1100-look-freeze-garden.png`.
+- [ ] **B2 Rehearse the four money beats** (bloom, tend ripple, dissolve, arrive replay) in the recording, letting each finish (timings in the kit §3). *Owner.* All four checked running in headless Edge and Chrome.
+- [ ] **B3 Listen on real speakers** (kit §2), fix anything harsh by number. *Owner listens; Claude tunes.*
+- [ ] **B4 Record** at 1440 × 900, 60 fps, with sound, following the kit's shot list; rehearse twice first. *Owner.*
+- [x] **B5 Killer still.** The reveal on Grandma Mei, captured at DPR 2: `docs/look-log/20261013-1130-killer-still-reveal-mei.png` (2880 × 1800) and `…-16x9.png` (1920 × 1080). The mid-dissolve frames read as a grey, fog-washed garden at thumbnail size, so they were not chosen. Fixed for the still: reveal labels could lie across each other ("Osmanthus tea…" over "You don’t have…"); `RevealLabels` now places them in order, trying the other side and then a line lower or higher, and remembers each label's spot so nothing flickers (`src/ui/Reveal.tsx`).
+- [x] **C1 Rule whisper** (improvement-ideas 1B). `RULE_WHISPER` and `ALONE_WHISPER` in `src/ui/whispers.ts`, said through the store's `whisperOverride` by `say()`/`hush()` in `src/store/garden.ts`: a `?demo` link and "see a garden" open on "Memories that share someone or somewhere hold each other up." for 7s, then the usual whisper; a memory planted in the garden with no thread hears "It stands alone for now. Memories that share someone or somewhere hold each other up." 2.4s after planting, once its bloom has settled. A said line never covers the season's line, and `arrive`/`resetDemo` hush it so the return whisper is never hidden. Checked in headless Edge: rule at load, idle line after; "My first bicycle, painted green." (no tags) gets the alone line. Also: a holder named mid-sentence now has a lowercase article ("A faint thread to the sea at night"). **For Spark:** no tests written for these.
+- [ ] **C2 Live thread preview in the first plantings** (improvement-ideas 1A, ~1h). Optional; only before the freeze, on the owner's word.
+- [x] **C4 Story mode "watch a season" (D20).** Asked for by the owner after the freeze, to make the first pillar visible: forgetting is not failure. `src/ui/story.ts` (an abortable timeline over store actions, captions in `STORY_LINES`), `src/ui/StoryEntry.tsx` (top-left, demo garden only), a second link on the threshold, `story` + `setStory` in the store (ending a story clears its stale return line), and `GardenWhisper` showing the story's line first and never hiding it while the story plays. Beats: flowers → rule (hover m1) → tend m1 → type and plant *Tea with Grandma Mei in Hangzhou.* → "left alone for two days" → arrive, the camera at the library rooftop as it dissolves → pull back to the dusk garden with the forgetting line → return the rooftop → the reveal. *Checked in headless Chrome* from the threshold link: all nine captions in order, the run lasts about 71s to the reveal, 11 flowers and 1 light at the end, no console errors. **For Spark:** no tests written.
+- [x] **C3 Voiceover script** in pillar language, ending on the reveal: kit §4.
+- [x] **D1 Listing copy** (hook, description, `?demo` link, controls, sound note, browsers): kit §5.
+- [x] **D2 Fallbacks.** The full demo path passes in **Edge and Chrome** (headless, Windows, no console errors). Safari and Firefox not checked; Safari may stay silent (strict audio start), so the listing says Chrome or Edge. The video file is the fallback for a failed live site (kit §6).
+- [x] **D3 Deploy, then freeze.** Deployed 13 Oct (`lethe-gioh00oly…`, https://lethe-nine.vercel.app). Checked live: `?demo` opens on the rule whisper, then the idle line; the full demo path passes in headless Edge with no console errors; fonts load; Groq keeps Hangzhou. **Frozen from here:** only red-tree or broken-path fixes, plus sound numbers after the B3 listen.
 
 ## Stretch (only if everything above is done)
 
