@@ -23,18 +23,14 @@ export function Effects() {
         flipflops={3}
         onFallback={() => { if (!forced) { setQuality('low'); setDpr(1); } }}
       />
-      {quality === 'high' ? (
-        <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.3} luminanceSmoothing={0.45} />
-          <Vignette offset={0.3} darkness={0.75} />
-          <Noise opacity={0.025} premultiply />
-        </EffectComposer>
-      ) : (
-        <EffectComposer multisampling={0}>
-          <Bloom intensity={0.65} luminanceThreshold={0.3} luminanceSmoothing={0.45} />
-          <Vignette offset={0.3} darkness={0.75} />
-        </EffectComposer>
-      )}
+      {/* One composer for both qualities: swapping two composers at runtime left the first one's cost behind
+          (P12.1: a declined ?stress=100 stayed at 15–20 fps, while starting at ?quality=low ran at ~68). */}
+      <EffectComposer multisampling={0}>
+        <Bloom key={quality} mipmapBlur={quality === 'high'} intensity={quality === 'high' ? 0.85 : 0.65}
+          luminanceThreshold={0.3} luminanceSmoothing={0.45} />
+        <Vignette offset={0.3} darkness={0.75} />
+        {quality === 'high' ? <Noise opacity={0.025} premultiply /> : <></>}
+      </EffectComposer>
     </>
   );
 }

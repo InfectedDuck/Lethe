@@ -3,6 +3,7 @@
 // is open, every thread recedes with the garden, so no light crosses its words (screen p2).
 // When a memory is lost the engine drops its threads at once; here they stay a little longer, flicker and go
 // out with the dissolve (storyboard p18).
+// A big garden draws only its strongest threads (D19): every thread still holds its memories up in the engine.
 
 import { useMemo, useRef } from 'react';
 import { threadBrightness, threadKey, type MemoryView } from '../../engine';
@@ -14,6 +15,11 @@ import { BLOOM_MS } from '../fx/bloomTimeline';
 import { threadDeparture } from '../fx/dissolveTimeline';
 import { HOVER_DIM, HOVER_LIT, REVEAL_DIM, REVEAL_LIT, RIPPLE_TRAVEL_MS, ThreadArc } from './ThreadArc';
 import type * as THREE from 'three';
+
+/** Up to this many threads, every one is drawn (the demo garden has eight). */
+const THREAD_BUDGET = 60;
+/** Past the budget, each flower keeps at least its strongest few. */
+const THREADS_PER_FLOWER = 2;
 
 type Drawn = {
   key: string; ids: [string, string]; a: THREE.Vector3; b: THREE.Vector3; strength: number; flicker: boolean;
@@ -48,6 +54,30 @@ export function Threads() {
     }];
   }), [garden, shown, layout]);
 
+  // The threads a big garden draws: each flower's strongest few, then the strongest of the rest, up to the budget.
+  const strongest = useMemo(() => {
+    if (live.length <= THREAD_BUDGET) return live;
+    const byStrength = [...live].sort((x, y) => y.strength - x.strength);
+    const count = new Map<string, number>();
+    const keep = new Set<Drawn>();
+    for (const t of byStrength) {
+      if (keep.size >= THREAD_BUDGET) break;
+      if (t.ids.some((id) => (count.get(id) ?? 0) < THREADS_PER_FLOWER)) {
+        keep.add(t);
+        for (const id of t.ids) count.set(id, (count.get(id) ?? 0) + 1);
+      }
+    }
+    for (const t of byStrength) { if (keep.size >= THREAD_BUDGET) break; keep.add(t); }
+    return live.filter((t) => keep.has(t));
+  }, [live]);
+  // What the person is looking at always shows all its threads: the hovered or open flower, or the reveal's holder.
+  const drawn = useMemo(() => {
+    if (strongest === live) return live;
+    const near = (t: Drawn) => (held ? t.ids.every((id) => held.includes(id)) : t.ids.some((id) => id === hoveredId || id === focusedId));
+    const kept = new Set(strongest);
+    return live.filter((t) => kept.has(t) || near(t));
+  }, [live, strongest, hoveredId, focusedId, held]);
+
   // Threads that just disappeared because one end is dissolving: keep drawing them until they have gone out.
   const previous = useRef(new Map<string, Drawn>());
   const departing = useRef(new Map<string, Drawn>());
@@ -61,7 +91,8 @@ export function Threads() {
   for (const [key, t] of departing.current) {
     if (liveKeys.has(key) || (t.departing && now > t.departing.goneAt + 1000)) departing.current.delete(key);
   }
-  previous.current = new Map(live.map((t) => [t.key, t]));
+  // Only a thread that was drawn can be seen going out.
+  previous.current = new Map(drawn.map((t) => [t.key, t]));
 
   // The latest tend at either end of a thread sends a ripple along it, away from the tended flower.
   // A memory that just bloomed sends one too, once it has finished growing: its first threads are lit by a pulse
@@ -78,7 +109,7 @@ export function Threads() {
 
   return (
     <>
-      {live.map((t) => (
+      {drawn.map((t) => (
         <ThreadArc key={t.key} seed={t.key} a={t.a} b={t.b} strength={t.strength} flicker={t.flicker}
           emphasis={emphasisFor(t.ids)} ripple={rippleFor(t.ids)} holdUntil={holdFor(t.ids)} />
       ))}
