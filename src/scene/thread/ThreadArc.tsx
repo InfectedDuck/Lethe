@@ -119,7 +119,8 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     const out = departing !== undefined && pnow >= departing.releaseAt;
     // State changes ease over ~3s, like dusk; the last thread of a dissolving memory goes out in ~0.8s.
     cur.s += ((held || out ? 0 : strength) - cur.s) * damp(out ? 5 : 1.2, dt);
-    cur.v += ((held || out ? 0 : 1) - cur.v) * damp(out ? 4 : 1.2, dt);
+    // A thread waiting for its flowers to grow is not there at all; it fades in once they have.
+    cur.v = held ? 0 : cur.v + ((out ? 0 : 1) - cur.v) * damp(out ? 4 : 1.2, dt);
     cur.e += (emphasis - cur.e) * damp(6, dt); // hover: ~0.4s, like the interface waking
     const s = cur.s, e = cur.e, v = cur.v;
     const t = reduced ? 0 : clock.elapsedTime;
