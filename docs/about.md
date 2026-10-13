@@ -33,9 +33,7 @@ Use desktop Chrome or Edge, around 1440 × 900 or larger. Sound starts with the 
 | Ending image | [Final composition](screenshots/ending.png) |
 | Recording and narration guide | [Recording kit](recording-kit.md) |
 | Presentation and PowerPoint files | [Presentation package](presentation/README.md) |
-| Recorded video URL | Pending the owner's recording and upload |
-
-Attach the recorded video when available. Its destination is not invented here.
+| Recorded video | [The three-minute film, 1080p with sound](../recordings/lethe-film-3min-1080p.mp4), recorded from the live site |
 
 ## Key decisions and trade-offs
 
