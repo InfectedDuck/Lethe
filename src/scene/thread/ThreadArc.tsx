@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { Line2 } from 'three-stdlib';
 import { rng, TOKENS } from '../../engine';
+import { warming } from '../../store/sceneReady';
 import { damp, useReducedMotion } from '../motion';
 
 export type ThreadArcProps = {
@@ -171,9 +172,11 @@ export function ThreadArc({ a, b, strength, emphasis = 1, flicker = false, sugge
     // What would draw nothing is not drawn (P12.1): most faint threads carry no light, and a gone thread no line.
     let lit = false;
     for (let i = 0; i < count; i++) if (alpha.getX(i) > 0.002) { lit = true; break; }
-    if (lights.current) lights.current.visible = lit;
-    if (core.current) core.current.visible = (coreMat?.opacity ?? 0) > 0.002;
-    if (glow.current) glow.current.visible = (glowMat?.opacity ?? 0) > 0.002;
+    // ...except while the scene warms up: every part is drawn once, so its shader compiles before it is needed.
+    const warm = warming();
+    if (lights.current) lights.current.visible = warm || lit;
+    if (core.current) core.current.visible = warm || (coreMat?.opacity ?? 0) > 0.002;
+    if (glow.current) glow.current.visible = warm || (glowMat?.opacity ?? 0) > 0.002;
   });
 
   return (

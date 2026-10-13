@@ -153,7 +153,7 @@ Numbers are allowed here, never in the interface. Speak slowly; leave the quiet 
 - **+ plant** (or <kbd>N</kbd>): write a memory that names someone already there, such as Grandma Mei or Leo.
 - Press <kbd>`</kbd> for the time slider: slide two weeks, then **arrive**, and watch the fog take what nothing holds.
 - **what holds you** (top left) shows the people and places your garden leans on.
-- Scroll to rise over the garden. <kbd>Esc</kbd> closes anything open.
+- Drag to turn, right-drag (or two fingers) to move over the garden, scroll toward the cursor to come close or rise above it. <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the arrow keys glide, <kbd>Q</kbd>/<kbd>E</kbd> turn, <kbd>Esc</kbd> closes anything open.
 
 **Notes:** Sound starts on your first click (headphones help). Desktop Chrome or Edge, a window 1440 × 900 or larger. Your own garden (click anywhere on the opening screen without `?demo`) stays in your browser only.
 

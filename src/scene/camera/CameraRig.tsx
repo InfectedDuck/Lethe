@@ -114,9 +114,8 @@ export function CameraRig() {
     return () => { removeEventListener('keydown', down); removeEventListener('keyup', up); removeEventListener('blur', clear); };
   }, []);
 
-  useFrame((_, dt) => {
-    const c = controls.current;
-    if (!c) return;
+  /** One frame of the rig. It may move the camera and what it looks at; `useFrame` below re-aims it afterwards. */
+  const rig = (c: OrbitControlsImpl, dt: number) => {
     const t = clock.elapsedTime;
     const step = Math.min(dt, 0.05);
 
@@ -129,7 +128,8 @@ export function CameraRig() {
     const hadGoal = !!focus.current.id || reveal.current.open;
     // Re-frame when the focus changes, or when the open memory is lost or returned (seed ↔ flower).
     const focusedLost = focusedId ? garden.memories[focusedId]?.lost : undefined;
-    if (focusedId !== focus.current.id || focusedLost !== focus.current.lost) {
+    const reframed = focusedId !== focus.current.id || focusedLost !== focus.current.lost;
+    if (reframed) {
       const m = focusedId ? garden.memories[focusedId] : null;
       const L = focusedId ? layout[focusedId] : null;
       // A lost memory is only its dark seed: come close to the seed on the ground.
@@ -144,7 +144,15 @@ export function CameraRig() {
       before.current = { pos: camera.position.clone().sub(drifted.current), target: c.target.clone().sub(drifted.current) };
       drifted.current.set(0, 0, 0);
       returning.current = null;
-    } else if (!hasGoal && hadGoal) {
+    }
+    // A goal begins (or moves to another memory): the click that opened it left a little spin in the controls'
+    // inertia. Let it go at once, so it never nudges the glide (that read as a shake).
+    if (hasGoal && (!hadGoal || reframed)) {
+      c.enableDamping = false;
+      c.update();
+      c.enableDamping = true;
+    }
+    if (!hasGoal && hadGoal) {
       const moved = focus.current.overridden || reveal.current.overridden;
       returning.current = moved ? null : before.current;
       before.current = null;
@@ -205,6 +213,15 @@ export function CameraRig() {
     camera.position.add(delta);
     c.target.add(delta);
     drifted.current.copy(driftWant.current);
+  };
+
+  // The controls aim the camera before the rig runs; the rig may then move the camera and what it looks at. Aim
+  // again afterwards, so position and aim always agree in the frame that is drawn (otherwise a glide shakes).
+  useFrame((_, dt) => {
+    const c = controls.current;
+    if (!c) return;
+    rig(c, dt);
+    camera.lookAt(c.target);
   });
 
   return (

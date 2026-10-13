@@ -5,6 +5,7 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { flowerColor, hashSeed, mixOklab, TOKENS, type Kind, type MemoryState } from '../../engine';
+import { warming } from '../../store/sceneReady';
 import { BloomGrowth } from '../fx/BloomGrowth';
 import { DarkSeed } from '../fx/DarkSeed';
 import { ALIVE, dissolveBeats } from '../fx/dissolveTimeline';
@@ -157,12 +158,13 @@ export function Flower({ kind, seed, hue, size, state, position, dim = 1, onPoin
       const h = geo.head.y / geo.height;
       halo.current.position.x = geo.head.x + u.uBend.value * h * h * geo.height;
     }
-    // A part that would draw nothing is not drawn at all (P12.1: in a big garden every draw call counts).
-    const op = u.uOpacity.value;
-    if (halo.current) halo.current.visible = u.uHalo.value * op > INVISIBLE;
-    if (fill.current) fill.current.visible = Math.max(u.uFill.value, u.uLeafFill.value, u.uSolid.value) * op > INVISIBLE;
-    if (lines.current) lines.current.visible = op > INVISIBLE;
-    if (motes.current) motes.current.visible = u.uMotes.value * op > INVISIBLE;
+    // A part that would draw nothing is not drawn at all (P12.1: in a big garden every draw call counts), except
+    // while the scene warms up: then everything is drawn once, so its shader compiles before it is needed.
+    const op = u.uOpacity.value, warm = warming();
+    if (halo.current) halo.current.visible = warm || u.uHalo.value * op > INVISIBLE;
+    if (fill.current) fill.current.visible = warm || Math.max(u.uFill.value, u.uLeafFill.value, u.uSolid.value) * op > INVISIBLE;
+    if (lines.current) lines.current.visible = warm || op > INVISIBLE;
+    if (motes.current) motes.current.visible = warm || u.uMotes.value * op > INVISIBLE;
   });
 
   const haloW = geo.width * 0.96, haloH = kind === 'place' ? geo.height * 0.4 : haloW;
