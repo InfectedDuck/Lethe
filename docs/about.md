@@ -34,6 +34,7 @@ Use desktop Chrome or Edge, around 1440 × 900 or larger. Sound starts with the 
 | Recording and narration guide | [Recording kit](recording-kit.md) |
 | Presentation and PowerPoint files | [Presentation package](presentation/README.md) |
 | Recorded video | [The three-minute film, 1080p with sound](../recordings/lethe-film-3min-1080p.mp4), recorded from the live site |
+| Recorded video, Chinese subtitles | [The same film with Chinese subtitles](../recordings/lethe-film-3min-1080p-zh.mp4) · [subtitle file (.srt)](../recordings/lethe-film-3min-1080p-zh.srt) |
 
 ## Key decisions and trade-offs
 
