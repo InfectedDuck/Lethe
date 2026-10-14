@@ -36,6 +36,7 @@ Use desktop Chrome or Edge, around 1440 × 900 or larger. Sound starts with the 
 | Recording and narration guide | [Contest kit](docs/contest-kit.md) |
 | Presentation and PowerPoint files | [Presentation package](docs/presentation/README.md) |
 | Recorded video | [The three-minute film, 1080p with sound](recordings/lethe-film-3min-1080p.mp4), recorded from the live site |
+| Recorded video, Chinese subtitles | [The same film with Chinese subtitles](recordings/lethe-film-3min-1080p-zh.mp4) · [subtitle file (.srt)](recordings/lethe-film-3min-1080p-zh.srt) |
 | Voting URL | Pending the organizer's actual voting destination |
 
 Attach the actual voting link when available. Its destination is not invented here.
