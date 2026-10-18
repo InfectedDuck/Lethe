@@ -1,0 +1,428 @@
+CLAUDE DESIGN BRIEF: LETHE, FIVE-MINUTE BILINGUAL PRESENTATION
+
+Copy this complete brief into Claude Design. Attach the current deck, current
+screenshots, and the existing speech. If Claude Design cannot access this repo,
+upload those files rather than assuming it can read the paths below.
+
+YOUR TASK
+
+Adapt our existing Lethe presentation into a five-minute bilingual presentation.
+Deliver a finished design and an English
+speaker script, with Simplified Chinese translations on the slides. We speak
+English. Many audience members read Chinese more comfortably. They should
+understand the premise, the choice, and the ending even without our narration.
+
+Use our existing presentation and wording as the foundation. Improve the
+hierarchy, pacing, imagery, and bilingual readability. Keep its botanical night
+garden identity. Do not turn this into a generic startup pitch or a mythology
+lecture. The aim is a memorable experience and a clear, honest invitation to try
+Lethe.
+
+SOURCES TO READ FIRST
+
+Existing presentation:
+- docs/presentation/lethe-showcase.pptx: twelve-slide, six-minute source.
+- docs/presentation/lethe-3min.pptx: shorter source.
+- docs/presentation/lethe-presentation.html, presentation.css, presentation.js:
+  the existing interactive browser deck and its visual language.
+- docs/presentation/showcase-speech.md: source speech and delivery cues.
+- docs/presentation/three-minute-speech.md: shorter source speech.
+
+Current product truth:
+- README.md and docs/recording-kit.md.
+- CLAUDE.md and docs/decisions.md, especially D24–D27, if working in this repo.
+- src/ui/story.ts: exact current film titles and captions.
+
+Use the NEW episode screenshots from docs/screenshots/:
+garden.png, memory.png, planting.png, tending.png, seed.png, rooftop.png,
+ending.png, film-name.png.
+
+The old deck's docs/presentation/assets/ images show the original ten-memory
+reference garden. Prefer the new episode captures for episode claims. Do not
+mix pictures from different branches into a supposed continuous live outcome.
+Do not invent flowers, relationships, memory text, or survival outcomes.
+
+Product links:
+Playable episode: https://lethe-nine.vercel.app/?demo=play
+Three-minute film: https://lethe-nine.vercel.app/?demo=film
+Personal entry: https://lethe-nine.vercel.app/
+
+A finished recording has not been supplied with this brief. Do not display a
+nonexistent video, invent its filename, or claim that the deck includes one.
+Provide a clearly labelled local-video placeholder only in presenter setup.
+
+THE CENTRAL STORY
+
+Keep this central line explicit:
+“Lethe turns fragments of a life into a living garden.”
+“Lethe 把人生的片段，变成一座有生命的花园。”
+
+A memory becomes a flower. Shared people, places, and feelings create threads.
+Care can reach connected memories. With limited light, the visitor chooses what
+to tend. A season changes the garden. Some flowers fade into outlines or seeds.
+Original words remain, and returning is a deliberate action. The resulting
+garden expresses the relationships and attention that shape this life.
+
+Use this emotional progression to guide pacing:
+recognition, attachment, choice, visible consequence, quiet, reflection.
+
+Our fictional episode begins with 23 authored memories, one remaining light,
+and one optional planting that brings it to 24. The playable episode pauses
+between actions and advances 21 fictional garden days when requested. Do not
+say three real weeks elapse during the stage demonstration. Personal gardens
+have separate real-time rules. Do not explain the mathematical formulas during
+the main talk.
+
+VISUAL DIRECTION
+
+Create nine main slides in 16:9, suitable for a venue projector. Use current
+garden screenshots as the main visual evidence. Fit 1440×900 screenshots within
+the slide against the same night background, or crop only empty margins after
+checking that flowers, seeds, quotes, and relationship evidence remain intact.
+Never stretch an image. Avoid putting new text over existing screenshot text.
+
+Reuse the current identity:
+- Night #0b0e14, warm ivory #f2ede3, fog #aab3c3, gentle gold #f1ce94.
+- Cormorant Garamond for English display titles and memory quotations.
+- Inter for English supporting copy.
+- Noto Serif SC or Source Han Serif SC for Chinese display text.
+- Noto Sans SC or Source Han Sans SC for Chinese supporting text.
+- Use a locally available Chinese fallback such as Microsoft YaHei when needed.
+  Confirm character coverage and permitted font embedding. Chinese must remain
+  editable text rather than a raster screenshot.
+
+Use a soft night gradient behind bilingual text where needed. Restrained glow,
+legible flowers, delicate threads, and generous empty space should carry the
+design. Do not make the entire image so dark that it disappears on a projector.
+Solve visibility with text placement and a local backing band before changing
+the screenshot. Preserve the visible evidence of loss.
+
+English and Chinese must have equal visual importance. On interaction slides,
+put Chinese directly beneath or beside its corresponding English phrase. Do
+not collect all translations in a tiny footer. A Chinese-speaking viewer should
+be able to follow the sequence by reading the slides alone.
+
+At standard widescreen slide size, target 38–52 pt English display titles,
+32–44 pt Chinese titles, and 24–30 pt essential supporting text in both
+languages. The memory quotation needs at least 28 pt in each language. Keep
+one idea per slide and normally one short sentence per language. If bilingual
+copy will not fit, shorten it or simplify the layout instead of shrinking it.
+
+Keep English interface-style headings lowercase. Preserve the original wording
+and capitalization of memory quotations. Keep Lethe as the product name. Do not
+rename it “忘川,” imply a Chinese cultural origin, or add cultural symbols merely
+because some audience members are Chinese.
+
+No stock garden photos, AI-generated replacement gameplay, Greek statues,
+temples, elaborate river scenes, decorative icons, emoji, charts of imaginary
+metrics, scores, badges, red warning colors, or busy UI panels. Do not add
+dramatic funeral imagery. The presentation should feel thoughtful and alive.
+
+Use manual advances. Transitions should be gentle fades, around 0.4–0.7 seconds.
+No automatic slide timing, spinning flowers, fast zooms, or confetti. Limit
+builds to revealing a real relationship or showing a genuine before/after.
+Make the static exported deck understandable without animations.
+
+FIVE-MINUTE MAIN ROUTE: EXACTLY 300 SECONDS
+
+The timings include pauses, audience response, browser switching, and the live
+garden. Use nine main slides. Do not add a separate agenda, team biography,
+market analysis, or technical-stack slide to the five-minute route.
+
+SLIDE 1 — 0:00–0:25 — A MEMORY BELONGING TO THE AUDIENCE
+
+On screen:
+lethe
+a life becomes a garden
+让人生成为一座花园
+
+think of one memory. keep it to yourself.
+想起一段回忆，留在心里就好。
+
+Use the new opening garden. Keep the title quiet enough for the flowers to be
+visible. The private-memory invitation is the hook, not a request for a story.
+Give the room five seconds to think. Do not require anyone to close their eyes.
+
+English speaker notes:
+“Think of one memory you would like to visit again. Perhaps a voice, a song,
+or a familiar place. Keep it to yourself. [Pause five seconds.] We built
+Lethe, where fragments of a life become a garden.”
+
+SLIDE 2 — 0:25–0:50 — WHY THE NAME LETHE
+
+On screen:
+lethe: the river of forgetfulness
+Lethe：希腊神话中的遗忘之河
+
+what if forgetting could be shown gently?
+如果遗忘也能被温柔地呈现呢？
+
+Use quiet garden space as the background. No extra historical illustration.
+History should occupy only this 25-second beat. Lethe is associated with a
+river of forgetfulness in Greek mythology. The gentle garden is OUR design
+interpretation, not an ancient teaching. Do not invent philosopher quotations,
+claim Greek myth proves our mechanics, or make claims about human cognition.
+
+English speaker notes:
+“In Greek mythology, Lethe is a river of forgetfulness. That name gave us a
+question: what if forgetting could be shown gently? Here, a fading memory
+keeps its words as a seed. We can return to it when we choose.”
+
+Historical source for speaker notes or a sources appendix, not a tiny main-slide
+paragraph: Theoi, ‘Lethe,’ including its cited classical passages:
+https://www.theoi.com/Khthonios/PotamosLethe.html
+
+SLIDE 3 — 0:50–1:20 — LET THE AUDIENCE MEET SOMEONE
+
+On screen:
+her words
+她说过的话
+
+“You don’t have to be brave all the time.”
+“你不必每时每刻都勇敢。”
+
+grandma mei
+梅奶奶
+
+a fictional example life
+一段虚构的人生
+
+Use memory.png. Give the exact quotation the visual focus. Show Chinese outside
+the screenshot with a clearly paired layout. Never paint over or replace the
+original words inside the game capture. Keep the fictional-life label readable.
+
+English speaker notes:
+“In our fictional example life, Grandma Mei says, ‘You don’t have to be brave
+all the time.’ [Pause.] Her words, her kitchen, and her music could sit in
+different folders. Here, their threads let us see Grandma Mei across them.”
+
+SLIDE 4 — 1:20–1:50 — THE RULE PEOPLE CAN SEE
+
+On screen, reveal two paired lines:
+every flower is a fragment of a life.
+每一朵花，都是人生的一个片段。
+
+memories that share someone or somewhere hold each other up.
+拥有共同人物或地点的回忆，会彼此支撑。
+
+Use an actual connection view or tending.png. A subtle emphasis can identify
+one real thread. Do not draw new connections into the screenshot. Keep the
+diagram explanation literal: connection comes from shared entities, not from
+physical closeness or matching flower color.
+
+English speaker notes:
+“Every flower is a fragment of a life. Shared people and places create
+connections. Tending one memory sends some care to its living neighbors.
+A new memory can add a thread. You can watch these relationships change
+what remains after a season.”
+
+SLIDE 5 — 1:50–2:05 — ONE CHOICE FOR THE ROOM
+
+On screen:
+one light. where would you place it?
+只剩一束光，你会照料哪段回忆？
+
+LEFT: grandma mei’s words / 梅奶奶的话
+RIGHT: the library rooftop / 图书馆屋顶
+
+raise a hand for the memory you would tend.
+举手选出你想照料的那段回忆。
+
+Use the same two-memory choice from the original deck. Both options should
+have equal size and contrast. No winning label, tally, guilt, or correct answer.
+Point left and right so the question remains understandable without English.
+Allow about six seconds for hands. If the room is quiet, choose Grandma Mei
+and proceed. Do not repeat the question or spend time counting a close result.
+
+English speaker notes:
+“One light remains. Grandma Mei’s words, or the library rooftop? [Point to
+each; pause for hands.] Let’s take that choice into the garden.”
+
+SLIDE 6 — 2:05–3:35 — THE ACTUAL LIVING GARDEN, 90 SECONDS
+
+This is the demonstration slot, not a slide covered with instructions. Show
+the live playable episode, prepared in a separate browser tab before the talk.
+Carry the room’s tending choice into the actual game. Use the tea planting
+for either tending choice so the comparison stays understandable.
+
+Before entering the game, display these paired words briefly:
+plant · tend · let a season pass
+种下回忆 · 照料回忆 · 让一季过去
+
+The presenter speaks:
+“Watch where the light travels. Then watch what the season leaves behind.”
+
+Private rehearsal cues, not public slide text:
+- First 15 seconds: open the chosen memory, read it briefly, and tend it once.
+- Next 20 seconds: choose the authored tea fragment, show its actual preview,
+  plant, and let the bloom and first threads finish.
+- Next 30 seconds: let a season pass, let the visual replay finish, and look at
+  what actually happened. Stay quiet during the dissolve. Hold a quiet space
+  for four seconds. The timing is a rehearsal budget, not a forced simulation.
+- Final 25 seconds: show the resulting garden and a surviving relationship,
+  then return to the presentation. Rehearse the actual controls before stage.
+
+When tending Grandma Mei and planting tea, the rooftop naturally becomes a
+seed. When tending the rooftop and planting tea, it naturally remains a ghost.
+If the room kept the rooftop, show another actual seed or discuss the remaining
+quiet spaces. Never narrate a preserved rooftop as lost.
+
+This live site currently has English UI. Bilingual slides do not translate the
+website. Give viewers a bilingual explanation before and after the demo.
+Do not promise Chinese gameplay unless a separate translation is implemented.
+
+Do NOT insert the entire three-minute film into this 90-second slot. Do not
+speed up the film or cut away growth and loss to make it fit. If a genuine,
+approved 90-second live recording is supplied later, it can be a fallback:
+say “This recorded visit follows our rehearsed choice.” Never pretend a
+recording responds to raised hands. If no such clip exists, use current stills
+for a clearly identified walkthrough; do not claim to be running a simulation.
+
+SLIDE 7 — 3:35–4:05 — WHAT THE QUIET SPACE MEANS
+
+On screen:
+a seed remains
+种子仍在
+
+the words remain. we can return to them.
+文字仍在，我们可以再次回到这段回忆。
+
+Use seed.png for the rehearsed Grandma Mei branch. Label it in presenter notes
+as a capture from that branch. If the live room chose the rooftop, describe
+this as an example of a faded memory, not their rooftop’s current outcome.
+Match narration to the live outcome.
+
+English speaker notes:
+“Some flowers keep their color. Others become outlines or seeds. The original
+words remain, and we can return to them. Our idea is that a meaningful life
+can contain quiet spaces. Care and connection give the garden its shape.”
+
+SLIDE 8 — 4:05–4:30 — THIS WORLD CAN BELONG TO YOU
+
+On screen:
+a world you can make your own
+一个由你亲手培育的世界
+
+your personal garden lives in this browser.
+你的个人花园保存在当前浏览器中。
+
+Use a current garden detail or planting capture with room for the two languages.
+Keep this part concrete. Avoid feature lists and architecture diagrams.
+
+English speaker notes:
+“The example life is fictional. Your own garden begins with your memories.
+Planting works offline, and your personal garden lives in this browser.
+If optional online tagging is enabled, it sends memory text and known entity
+names for suggestions.”
+
+Keep detailed privacy explanation in a backup slide. Do not claim that all
+information always stays on-device when optional provider tagging is enabled.
+
+SLIDE 9 — 4:30–5:00 — THE AUDIENCE'S MEMORY RETURNS
+
+On screen, reveal the original ending lines one at a time:
+you cannot keep every moment in bloom.
+你无法让每一段回忆都永远盛放。
+
+what you tend gives the garden its shape.
+你所照料的回忆，塑造了花园的模样。
+
+Then a small, readable invitation:
+try lethe.
+来体验 Lethe。
+
+Use ending.png or film-name.png, retaining quiet spaces. Keep the garden visible
+under the ending. Hold the final composition for the last five seconds.
+
+English speaker notes:
+“Return to the memory you imagined at the start. What would you grow around
+it? [Pause.] You cannot keep every moment in bloom. What you tend gives the
+garden its shape. Try Lethe. If it stays with you, plant a memory of your
+own. Thank you.”
+
+A QR code may point to https://lethe-nine.vercel.app/?demo=play and must be
+labelled “try the garden / 体验花园.”
+
+SPOKEN DELIVERY
+
+Use simple English, short sentences, and warmth. The presenter should sound
+like a person inviting others into something they made. Preserve silence in
+the live growth and loss sequences. Do not read both languages aloud, read
+all game captions, or apologize for speaking English.
+
+Put explicit [pause], [point], [hands], [switch to game], and [return to deck]
+cues in private speaker notes. The five-minute route has 210 seconds outside
+the 90-second demonstration. Fit the script, thinking time, hand response, and
+transitions into that budget. Use the provided script as the starting point;
+rehearsal determines the final pace. Aim to complete spoken words by 4:55.
+
+The audience should remember Grandma Mei's sentence, one real choice, and a
+quiet seed. Use the opening private memory again in the closing. Do not ask
+people to disclose grief or explain why they chose a memory. Invite people to
+try the garden once at the end. Do not invent user testimonials, traction, awards, or promises
+about mental health or scientific memory modeling.
+
+CHINESE LANGUAGE CHECK
+
+Use Simplified Chinese consistently. Pair translations by meaning, not literal
+word order. Preserve the gently reflective tone without adding sentimentality.
+Use “回忆” for lived moments and “记忆” for the general concept where natural.
+Use “照料” for tend, “种下回忆” for plant, “让一季过去” for the seasonal action,
+“放下” for let go, and “重访” for return as a short action label.
+Explain a ghost flower as “淡影”; avoid wording that makes it sound like a horror
+game. Keep “梅奶奶” and “图书馆屋顶” consistent. Retain Leo as a name or use
+“利奥（Leo）” at first introduction if needed.
+
+Translations in this brief are a working draft. If a Chinese-speaking teammate
+is available, have them check naturalness and projection readability before
+presenting. Do not claim native review has already happened.
+
+OPTIONAL BACKUP ROUTE IF THE WHOLE THREE-MINUTE FILM MUST BE SHOWN
+
+Use a separate five-minute route, not the nine-slide live route:
+0:00–0:25: private-memory opening.
+0:25–0:45: Lethe name and gentle forgetting question.
+0:45–1:05: flowers and threads, in both languages.
+1:05–1:20: ask what viewers predict will change; no promise of controlling film.
+1:20–4:20: run the COMPLETE three-minute film or an approved recording.
+4:20–5:00: meaning, return to their memory, invitation to try, final hold.
+
+Describe this film as two visits to the same fictional life with different
+planting choices. It follows its own fixed actions. Keep English narration
+silent during the film. Chinese subtitles, if separately requested, must match
+the real title/caption timing from src/ui/story.ts or the supplied recording;
+do not invent a completed subtitle track or modify the website in this task.
+
+DELIVERABLES
+
+1. Editable five-minute PPTX with nine main slides, bilingual text, current
+   screenshots, and English speaker notes including timing and interaction cues.
+   Proposed filename: lethe-5min-bilingual.pptx.
+2. PDF or slide PNG preview for visual checking. Inspect every slide, including
+   Chinese glyphs, quotation wrapping, contrast, safe areas, and image fit.
+3. English rehearsal script with timecodes totaling 5:00 and the live-demo
+   checklist. Keep technical cues private and Chinese slide text easy to locate.
+4. At most three backup slides: philosophy source, actual engine outcomes,
+   and local storage/optional tagging/technical details. Exclude them from timing.
+5. If HTML editing is supported, a NEW bilingual five-minute copy of the current
+   browser presentation with keyboard navigation, private speaker view, and the
+   same truthful choice behavior. Keep presenter controls off the projector.
+   Preserve the existing six-minute and three-minute files.
+
+Create only deliverables supported by your tools. If editable PPTX export is
+unavailable, say so and provide the designed slides plus structured speaker
+notes for PowerPoint assembly. Do not call a flattened image deck editable.
+
+ACCEPTANCE CHECKS
+
+The deck must work muted and still communicate its story through Chinese text
+and genuine garden imagery. Check the full slide sequence at projector size.
+Check paired translation prominence, consistent terminology, and font fallback.
+Read the English script aloud and rehearse the live transition within 5:00.
+Ensure every memory/relationship/outcome claim matches the current product.
+Verify the QR destination.
+Verify that no old ten-memory screenshot is labelled as the new episode.
+Do not replace the project implementation or alter engine rules to suit slides.
+
+Start by inspecting the existing presentation. Then create the finished design
+and speaker notes from this brief. Make sensible layout choices independently.
